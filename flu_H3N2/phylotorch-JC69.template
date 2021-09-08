@@ -1,0 +1,236 @@
+[
+{
+  "id": "taxa",
+  "type": "Taxa",
+  "taxa": TAXA_TEMPLATE
+},
+{
+  "id": "joint",
+  "type": "JointDistributionModel",
+  "distributions":[
+    {
+      "id": "like",
+      "type": "TreeLikelihoodModel",
+      "tree_model": {
+        "id": "tree",
+        "type": "ReparameterizedTimeTreeModel",
+        "newick": TREE_TEMPLATE,
+        "ratios": {
+            "id": "ratios",
+            "type": "TransformedParameter",
+            "transform": "torch.distributions.SigmoidTransform",
+            "x": {
+              "id": "ratios.unres",
+              "type": "Parameter",
+              "tensor": 0.5,
+              "full": [DIM_TEMPLATE]
+            }
+          },
+          "root_height": {
+            "id": "root_height",
+            "type": "TransformedParameter",
+            "transform": "torch.distributions.AffineTransform",
+            "parameters": {
+              "loc": ROOT_SHIFT_TEMPLATE,
+              "scale": 1.0
+            },
+            "x": {
+              "id": "root_height.unres",
+              "type": "Parameter",
+              "tensor": [0.5]
+            }
+          },
+        "taxa": "taxa"
+      },
+      "site_model": {
+        "id": "sm",
+        "type": "ConstantSiteModel"
+      },
+      "branch_model": {
+        "id": "clock",
+        "type": "StrictClockModel",
+        "tree_model": "tree",
+        "rate": {
+          "id": "rate",
+          "type": "Parameter",
+          "tensor": [0.001]
+        }
+      },
+      "site_pattern": {
+        "id": "sp",
+        "type": "SitePattern",
+        "alignment":{
+          "id": "alignment",
+          "type": "Alignment",
+          "datatype": "nucleotide",
+          "taxa": "taxa",
+          "sequences": SEQUENCES_TEMPLATE
+        }
+      },
+      "substitution_model": {
+        "id": "m",
+        "type": "JC69"
+      }
+    },
+    {
+      "id": "coalescent",
+      "type": "ConstantCoalescentModel",
+      "theta": {
+        "id": "theta",
+        "type": "Parameter",
+        "tensor": [3.0]
+      },
+      "tree_model": "tree"
+    },
+    {
+      "id": "oneonx",
+      "type": "Distribution",
+      "distribution": "phylotorch.distributions.one_on_x.OneOnX",
+      "x": "theta"
+    },
+    {
+      "id": "clock.prior",
+      "type": "Distribution",
+      "distribution": "torch.distributions.exponential.Exponential",
+      "x": "rate",
+      "parameters":{
+        "rate": 1000
+      }
+    },
+    "ratios",
+    "tree"
+  ]
+},
+{
+  "id": "advi",
+  "type": "Optimizer",
+  "algorithm": "torch.optim.Adam",
+  "maximize": true,
+  "lr": 0.0001,
+  "checkpoint": false,
+  "iterations": ITERATION_TEMPLATE,
+  "loss": {
+    "id": "elbo",
+    "type": "ELBO",
+    "samples": 1,
+    "joint": "joint",
+    "variational": {
+      "id": "varmodel",
+      "type": "JointDistributionModel",
+      "distributions":[
+        {
+          "id": "varratios",
+          "type": "Distribution",
+          "distribution": "torch.distributions.normal.Normal",
+          "parameters": {
+            "loc": {
+              "id": "loc.ratios",
+              "type": "Parameter",
+              "full_like": "ratios",
+              "tensor": 0.5
+            },
+            "scale":{
+              "id": "scale.ratios",
+              "type": "TransformedParameter",
+              "transform": "torch.distributions.ExpTransform",
+              "x": {
+                "id": "scale.ratios.unres",
+                "type": "Parameter",
+                "full_like": "ratios",
+                "tensor": -1.89712
+              }
+            }
+          },
+          "x": "ratios.unres"
+        },
+        {
+          "id": "varheight",
+          "type": "Distribution",
+          "distribution": "torch.distributions.log_normal.LogNormal",
+          "parameters": {
+            "loc": {
+              "id": "loc.root_height",
+              "type": "Parameter",
+              "tensor": [0.5]
+            },
+            "scale":{
+              "id": "scale.root_height",
+              "type": "TransformedParameter",
+              "transform": "torch.distributions.ExpTransform",
+              "x": {
+                "id": "scale.root_height.unres",
+                "type": "Parameter",
+                "tensor": [-1.89712]
+              }
+            }
+          },
+          "x": "root_height.unres"
+        },
+        {
+          "id": "vartheta",
+          "type": "Distribution",
+          "distribution": "torch.distributions.log_normal.LogNormal",
+          "parameters": {
+            "loc": {
+              "id": "loc.theta",
+              "type": "Parameter",
+              "tensor": [1.45]
+            },
+            "scale":{
+              "id": "scale.theta",
+              "type": "TransformedParameter",
+              "transform": "torch.distributions.ExpTransform",
+              "x": {
+                "id": "scale.theta.unres",
+                "type": "Parameter",
+                "tensor": [-2.040221]
+              }
+            }
+          },
+          "x": "theta"
+        },
+        {
+          "id": "varclock",
+          "type": "Distribution",
+          "distribution": "torch.distributions.log_normal.LogNormal",
+          "parameters": {
+            "loc": {
+              "id": "loc.rate",
+              "type": "Parameter",
+              "tensor": [-5.6]
+            },
+            "scale":{
+              "id": "scale.rate",
+              "type": "TransformedParameter",
+              "transform": "torch.distributions.ExpTransform",
+              "x": {
+                "id": "scale.rate.unres",
+                "type": "Parameter",
+                "tensor": [-2.65926]
+              }
+            }
+          },
+          "x": "rate"
+        }
+
+      ]
+    }
+  },
+  "parameters": ["loc.ratios", "scale.ratios.unres", 
+    "loc.root_height", "scale.root_height.unres",
+    "loc.theta", "scale.theta.unres",
+    "loc.rate", "scale.rate.unres"],
+  "convergence":{
+    "type": "StanVariationalConvergence",
+    "max_iterations": ITERATION_TEMPLATE,
+    "loss": "elbo",
+    "every": 100,
+    "samples": 1
+  },
+  "scheduler":{
+    "type": "Scheduler",
+    "scheduler": "torch.optim.lr_scheduler.LambdaLR",
+    "lr_lambda": "lambda epoch: 1.0 / (epoch + 1)**0.5"
+  }
+}
+]

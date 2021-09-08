@@ -73,6 +73,15 @@
 					"type": "distribution",
 					"distribution": "oneonx",
 					"x": "&n0"
+				},
+				{
+					"id":"priorrate",
+					"type": "distribution",
+					"distribution": "exponential",
+					"x": "&rate",
+					"parameters":{
+						"lambda":{"id":"lambda.rate", "type":"parameter", "value":1000}
+					}
 				}
 			]
 		}
@@ -131,7 +140,7 @@
 		"algorithm":"sg",
 		"type":"optimizer",
 		"tol": 0.0000001,
-		"eta": 0.001,
+		"eta": 0.01,
 		"_model": "&var",
 		"model": "&varnormal",
 		"parameters": ["%mu", "%sigma", "&mu.rate", "&sigma.rate","&mu.theta", "&sigma.theta"],
