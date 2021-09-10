@@ -128,14 +128,6 @@
 },
 "physher":[
 	{
-		"id": "loo",
-		"type": "logger",
-		"models": "&tree",
-		"tree": true,
-		"internal": false,
-		"file": "OUTPUT_TEMPLATE"
-	},
-	{
 		"id":"sg",
 		"algorithm":"sg",
 		"type":"optimizer",

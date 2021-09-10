@@ -224,6 +224,7 @@
     "type": "StanVariationalConvergence",
     "max_iterations": ITERATION_TEMPLATE,
     "loss": "elbo",
+    "tol_rel_obj": 0.00000001,
     "every": 100,
     "samples": 1
   },

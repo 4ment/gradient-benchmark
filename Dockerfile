@@ -1,11 +1,11 @@
 FROM quay.io/matsengrp/conda-beagle
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update --allow-releaseinfo-change && apt-get install -y --no-install-recommends \
 	cmake \
+	git \
 	libgsl0-dev \
 	unzip \
-	wget \
-	git
+	wget
 
 RUN git clone --depth 1 --branch=main https://github.com/phylovi/libsbn /libsbn
 WORKDIR /libsbn
