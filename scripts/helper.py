@@ -46,7 +46,6 @@ def create_sub_files(
 def prepare_physher(
     subfasta_file, subtree_file, dates_file, json_template_file, json_file, iterations
 ):
-    output_tree = subfasta_file.replace(".fasta", ".physher.tree")
     dates = read_dates(dates_file)
     with open(json_template_file, "r") as fp:
         content = fp.read()
@@ -59,7 +58,6 @@ def prepare_physher(
         .replace("DATES_TEMPLATE", dates_json)
         .replace("TREE_TEMPLATE", subtree_file)
         .replace("DIM_TEMPLATE", str(len(dates) - 1))
-        .replace("OUTPUT_TEMPLATE", output_tree)
         .replace("TEMPLATE_ITER", iterations)
     )
     with open(json_file, "w") as fp:
@@ -73,7 +71,7 @@ def prepare_phylotorch(
     json_template_file,
     json_file,
     iterations,
-    libsbn=None,
+    bito,
 ):
     dates = read_dates(dates_file)
     taxa = []
@@ -91,14 +89,18 @@ def prepare_phylotorch(
     with open(json_template_file, "r") as fp:
         content = fp.read()
 
-    if libsbn:
+    content = (
+        content.replace("TAXA_TEMPLATE", json.dumps(taxa))
+        .replace("ITERATION_TEMPLATE", iterations)
+        .replace("ROOT_SHIFT_TEMPLATE", str(root_shift))
+        .replace("DIM_TEMPLATE", str(len(datess) - 2))
+    )
+    if bito.lower() == "true":
         content = (
-            content.replace("SEQUENCES_TEMPLATE", subfasta_file)
-            .replace("TAXA_TEMPLATE", json.dumps(taxa))
-            .replace("TREE_TEMPLATE", subtree_file)
-            .replace("ITERATION_TEMPLATE", iterations)
-            .replace("ROOT_SHIFT_TEMPLATE", str(root_shift))
-            .replace("DIM_TEMPLATE", str(len(datess) - 2))
+            content.replace("SEQUENCES_TEMPLATE", '"' + subfasta_file + '"')
+            .replace("TREE_TEMPLATE", '"' + subtree_file + '"')
+            .replace('"newick"', '"file"')
+            .replace('"sequences"', '"file"')
         )
     else:
         with open(subtree_file, "r") as fp:
@@ -110,13 +112,8 @@ def prepare_phylotorch(
                 {"taxon": str(name).strip("'"), "sequence": str(alignment[name])}
             )
 
-        content = (
-            content.replace("SEQUENCES_TEMPLATE", json.dumps(sequences))
-            .replace("TAXA_TEMPLATE", json.dumps(taxa))
-            .replace("TREE_TEMPLATE", '"' + newick + '"')
-            .replace("ITERATION_TEMPLATE", iterations)
-            .replace("ROOT_SHIFT_TEMPLATE", str(root_shift))
-            .replace("DIM_TEMPLATE", str(len(datess) - 2))
+        content = content.replace("SEQUENCES_TEMPLATE", json.dumps(sequences)).replace(
+            "TREE_TEMPLATE", '"' + newick + '"'
         )
 
     with open(json_file, "w") as fp:
