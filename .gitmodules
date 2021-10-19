@@ -1,3 +1,4 @@
 [submodule "treetime_validation"]
 	path = treetime_validation
-	url = https://github.com/neherlab/treetime_validation
+	url = https://github.com/4ment/treetime_validation
+	branch = fix-path
