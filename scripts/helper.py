@@ -50,7 +50,7 @@ def prepare_physher(
     with open(json_template_file, "r") as fp:
         content = fp.read()
     dates_json = ",\n".join(
-        ['"{}_{}":{}'.format(taxon, date, date) for taxon, date in dates.items()]
+        ['"{}":{}'.format(taxon, date) for taxon, date in dates.items()]
     )
     dates_json = dates_json.rstrip(",\n")
     content = (
@@ -80,7 +80,7 @@ def prepare_phylotorch(
     for taxon, date in dates.items():
         taxa.append(
             {
-                "id": "{}_{}".format(taxon, date),
+                "id": "{}".format(taxon, date),
                 "type": "Taxon",
                 "attributes": {"date": float(date)},
             }
