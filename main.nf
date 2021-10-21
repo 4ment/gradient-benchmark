@@ -3,7 +3,7 @@
 nextflow.enable.dsl = 2
 
 params.results = "results"
-
+params.enable_beast = false
 params.subtrees_alignment = "$baseDir/treetime_validation/resources/flu_H3N2/H3N2_HA_2011_2013.fasta"
 
 include { treetime_validation } from "./modules/treetime_validation.nf" addParams(base: "$baseDir/treetime_validation")
@@ -41,31 +41,17 @@ process CONVERT_LSD_NEXUS_TO_NEWICK {
   """
 }
 
-def group_per_size(newick_ch, create_sub_ch) {
-  newick_ch
-          .phase(create_sub_ch)
-          .map { left, right ->
-            def size = left[0]
-            def rep = left[1]
-            def tree = left[2]
-            def fasta = right[3]
-            tuple(size, rep, tree, fasta)
-          }
+def group_per_size_rep(newick_ch, create_sub_ch) {
+  newick_ch.out.join(
+          create_sub_ch.out.map {
+            v ->
+              def size = v[0]
+              def rep = v[1]
+              def fasta = v[3]
+              def dates = v[4]
+              tuple(size, rep, fasta, dates)
+          }, by: [0, 1])
 }
-
-def group_per_size2(newick_ch, create_sub_ch) {
-  newick_ch
-          .phase(create_sub_ch)
-          .map { left, right ->
-            def size = left[0]
-            def rep = left[1]
-            def tree = left[2]
-            def dates = right[4]
-            def fasta = right[3]
-            tuple(size, rep, tree, fasta, dates)
-          }
-}
-
 
 process CREATE_SUB_FILES {
 
@@ -98,11 +84,11 @@ workflow {
 
   CONVERT_LSD_NEXUS_TO_NEWICK(RUN_LSD.out[0])
 
-  macro_flu(group_per_size2(
+  data = group_per_size_rep(
           CONVERT_LSD_NEXUS_TO_NEWICK.out,
-          CREATE_SUB_FILES.out))
+          CREATE_SUB_FILES.out)
 
-  micro(group_per_size(
-          CONVERT_LSD_NEXUS_TO_NEWICK.out,
-          CREATE_SUB_FILES.out))
+  macro_flu(data)
+
+  micro(data.map { it.take(4) })
 }

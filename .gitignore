@@ -1,0 +1,5 @@
+.idea/**
+.nextflow*
+work
+.DS_Store
+autodiff-experiments.iml

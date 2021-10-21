@@ -34,7 +34,7 @@ ENV BEAGLE_PREFIX /usr/local
 ENV LD_LIBRARY_PATH /usr/local/lib
 
 # Programs for treetime_validation
-RUN conda create -n treetime -c conda-forge -c bioconda python=2.7 treetime=0.7.4
+RUN conda create -n treetime -c conda-forge -c bioconda python=2.7 treetime=0.7.4 click
 
 RUN wget http://www.microbesonline.org/fasttree/FastTree-2.1.11.c
 RUN gcc -O3 -finline-functions -funroll-loops -Wall -o FastTree FastTree-2.1.11.c -lm  && mv FastTree /usr/local/bin
@@ -55,9 +55,13 @@ WORKDIR /
 
 RUN git clone --depth 1 https://github.com/4ment/phylotorch /phylotorch
 RUN cd /phylotorch && pip install .
+RUN ln -s /phylotorch/benchmarks/benchmark.py /usr/local/bin/phylotorch-benchmark \
+    && chmod +x /usr/local/bin/phylotorch-benchmark
 
 RUN git clone --depth 1 https://github.com/4ment/phylojax /phylojax
 RUN cd /phylojax && pip install jax==0.2.20 jaxlib .
+RUN ln -s /phylojax/benchmarks/benchmark.py /usr/local/bin/phylojax-benchmark \
+    && chmod +x /usr/local/bin/phylojax-benchmark
 
 RUN git clone --depth 1 https://github.com/4ment/phylostan /phylostan
 RUN cd /phylostan && pip install .

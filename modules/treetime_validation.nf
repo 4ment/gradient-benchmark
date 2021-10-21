@@ -2,8 +2,14 @@
 
 nextflow.enable.dsl = 2
 
-params.subtrees = Channel.of(20, 50, 100, 200, 500, 750, 1000, 1250, 1500, 2000)
-params.subtrees_replicates = Channel.of(0..9)
+params.subtrees = Channel.of(20, 50)//, 100, 200, 500, 750, 1000, 1250, 1500, 2000)
+params.subtrees_replicates = Channel.of(0..1)
+
+if(params.enable_beast){
+  beast_res = "--beast_file beast_res.csv"
+}else{
+  beast_res = ""
+}
 
 params.base = "$baseDir"
 
@@ -24,18 +30,18 @@ process TREETIME_VALIDATION_SUBTREES {
           path("dataset/subtrees/H3N2_HA_2011_2013_${size}_${rep}.nwk")
   path("treetime_res.csv")
   path("lsd_res.csv")
-  path("beast_res.csv")
+  path("beast_res.csv") optional true
   """
   source activate treetime
-  python $params.base/generate_flu_subtrees_dataset_run.py $size \
-                                                           dataset \
-                                                           $rep \
-                                                           treetime_res.csv \
-                                                           lsd_res.csv \
-                                                           beast_res.csv \
-                                                           ${alignment_file} \
-                                                           ${tree_file} \
-                                                           ${beast_template}
+  python $params.base/generate_flu_subtrees_dataset_run.py --size $size \
+                                                           --out_dir dataset \
+                                                           --suffix $rep \
+                                                           --treetime_file treetime_res.csv \
+                                                           --lsd_file lsd_res.csv \
+                                                           --aln_file ${alignment_file} \
+                                                           --tree_file ${tree_file} \
+                                                           --template_file ${beast_template} \
+                                                           $beast_res
   """
 
 }
