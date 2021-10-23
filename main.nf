@@ -26,7 +26,8 @@ process RUN_LSD {
   lsd2 -i ${subtree_dates_file} \
        -d ${new_dates_file} \
        -o lsd.out \
-       -s 1701
+       -s 1701 \
+       -l -1
   """
 }
 
@@ -42,8 +43,8 @@ process CONVERT_LSD_NEXUS_TO_NEWICK {
 }
 
 def group_per_size_rep(newick_ch, create_sub_ch) {
-  newick_ch.out.join(
-          create_sub_ch.out.map {
+  newick_ch.join(
+          create_sub_ch.map {
             v ->
               def size = v[0]
               def rep = v[1]

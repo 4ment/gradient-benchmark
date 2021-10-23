@@ -54,15 +54,23 @@ RUN ln -s /physher/Release/examples/benchmarking /usr/local/bin/physher-benchmar
 WORKDIR /
 
 RUN git clone --depth 1 https://github.com/4ment/phylotorch /phylotorch
-RUN cd /phylotorch && pip install .
+RUN cd /phylotorch && /opt/conda/envs/bito/bin/pip install .
 RUN ln -s /phylotorch/benchmarks/benchmark.py /usr/local/bin/phylotorch-benchmark \
-    && chmod +x /usr/local/bin/phylotorch-benchmark
+ && chmod +x /usr/local/bin/phylotorch-benchmark
+
+RUN . /opt/conda/etc/profile.d/conda.sh && conda activate bito && cd /bito && make
+RUN git clone --depth 1 https://github.com/4ment/phylotorch-bito /bitorch
+RUN cd /bitorch && /opt/conda/envs/bito/bin/pip install .
+RUN ln -s /bitorch/benchmarks/benchmark.py /usr/local/bin/bitorch-benchmark \
+    && chmod +x /usr/local/bin/bitorch-benchmark
 
 RUN git clone --depth 1 https://github.com/4ment/phylojax /phylojax
-RUN cd /phylojax && pip install jax==0.2.20 jaxlib .
+RUN cd /phylojax && /opt/conda/envs/bito/bin/pip install jax==0.2.20 jaxlib .
 RUN ln -s /phylojax/benchmarks/benchmark.py /usr/local/bin/phylojax-benchmark \
     && chmod +x /usr/local/bin/phylojax-benchmark
 
 RUN git clone --depth 1 https://github.com/4ment/phylostan /phylostan
 RUN cd /phylostan && pip install .
+
+RUN . /opt/conda/etc/profile.d/conda.sh && conda activate bito && conda install matplotlib
 

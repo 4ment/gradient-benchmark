@@ -5,8 +5,7 @@ nextflow.enable.dsl = 2
 params.replicates = 1000
 params.results = "results"
 
-//phylox = Channel.of("phylotorch", "phylotorch-bito", "phylojax")
-phylox = Channel.of("phylotorch", "phylojax")
+phylox = Channel.of("phylotorch", "bitorch", "phylojax")
 
 process RUN_PHYSHER_BENCHMARK {
   publishDir "$params.results/micro/physher.${size}.${rep}", mode: 'copy'
@@ -27,10 +26,13 @@ process RUN_PHYLOX_BENCHMARK {
   tuple val(size), val(rep), path(lsd_newick), path(seq_file), val(phylox)
   output:
   path("out.txt")
+  path("out.csv")
   """
+  source activate bito
   ${phylox}-benchmark -i $seq_file \
                       -t $lsd_newick \
-                      --replicates ${params.replicates} > out.txt
+                      --replicates ${params.replicates} \
+                      -o out.csv > out.txt
   """
 }
 

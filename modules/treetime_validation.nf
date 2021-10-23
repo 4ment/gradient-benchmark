@@ -2,8 +2,8 @@
 
 nextflow.enable.dsl = 2
 
-params.subtrees = Channel.of(20, 50)//, 100, 200, 500, 750, 1000, 1250, 1500, 2000)
-params.subtrees_replicates = Channel.of(0..1)
+params.subtrees = Channel.of(20, 50, 100, 200, 500, 750, 1000, 1250, 1500, 2000)
+params.subtrees_replicates = Channel.of(0..9)
 
 if(params.enable_beast){
   beast_res = "--beast_file beast_res.csv"

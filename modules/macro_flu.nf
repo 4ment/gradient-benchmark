@@ -118,6 +118,7 @@ process RUN_PHYLOTORCH {
   path("out.txt")
   path("time.log")
   """
+  source activate bito
   { time \
   phylotorch $phylotorch_json > out.txt ; } 2> time.log
   """
@@ -132,6 +133,7 @@ process RUN_PHYLOJAX {
   path("out.txt")
   path("time.log")
   """
+  source activate bito
   { time \
   phylojax -i ${seq_file} \
            -t ${tree_file} \
@@ -139,33 +141,6 @@ process RUN_PHYLOJAX {
            --eta 0.01 \
            --elbo_samples 1 \
            --grad_samples 1 > out.txt ; } 2> time.log
-  """
-}
-
-process RUN_LSD {
-  input:
-  tuple val(size), val(rep), path(subtree_dates_file), path(fasta), path(new_dates_file)
-  output:
-  tuple val(size), val(rep), path("lsd.out.date.nexus")
-  path "lsd.out.nwk", emit: lsd_tree_newick // branch=subst
-  path "lsd.out"
-
-  """
-  lsd2 -i ${subtree_dates_file} \
-       -d ${new_dates_file} \
-       -o lsd.out \
-       -s 1701
-  """
-}
-
-process CONVERT_LSD_NEXUS_TO_NEWICK {
-  input:
-  tuple val(size), val(rep), path(lsd_nexus)
-  output:
-  tuple val(size), val(rep), path("lsd_newick.nxs")
-
-  """
-  python $baseDir/scripts/helper.py 2 ${lsd_nexus} lsd_newick.nxs
   """
 }
 
