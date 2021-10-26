@@ -71,6 +71,3 @@ RUN ln -s /phylojax/benchmarks/benchmark.py /usr/local/bin/phylojax-benchmark \
 
 RUN git clone --depth 1 https://github.com/4ment/phylostan /phylostan
 RUN cd /phylostan && pip install .
-
-RUN . /opt/conda/etc/profile.d/conda.sh && conda activate bito && conda install matplotlib
-
