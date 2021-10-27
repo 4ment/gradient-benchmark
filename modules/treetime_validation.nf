@@ -32,7 +32,7 @@ process TREETIME_VALIDATION_SUBTREES {
   path("lsd_res.csv")
   path("beast_res.csv") optional true
   """
-  source activate treetime
+  conda activate treetime
   python $params.base/generate_flu_subtrees_dataset_run.py --size $size \
                                                            --out_dir dataset \
                                                            --suffix $rep \

@@ -24,14 +24,15 @@ WORKDIR beagle-lib
 RUN git checkout 3dade2bf55f221a837019c2d80b309291c708704
 RUN ./autogen.sh && ./configure && make install
 
+ENV BEAGLE_PREFIX /usr/local
+ENV LD_LIBRARY_PATH /usr/local/lib
+
 RUN git clone --depth 1 --branch=main https://github.com/phylovi/bito /bito
 WORKDIR /bito
 RUN git submodule update --init --recursive
 RUN conda env create -f environment.yml
+RUN . /opt/conda/etc/profile.d/conda.sh && conda activate bito && cd /bito && make
 WORKDIR /
-
-ENV BEAGLE_PREFIX /usr/local
-ENV LD_LIBRARY_PATH /usr/local/lib
 
 # Programs for treetime_validation
 RUN conda create -n treetime -c conda-forge -c bioconda python=2.7 treetime=0.7.4 click
@@ -54,20 +55,19 @@ RUN ln -s /physher/Release/examples/benchmarking /usr/local/bin/physher-benchmar
 WORKDIR /
 
 RUN git clone --depth 1 https://github.com/4ment/phylotorch /phylotorch
-RUN cd /phylotorch && /opt/conda/envs/bito/bin/pip install .
+RUN cd /phylotorch && /opt/conda/envs/bito/bin/pip install . && /opt/conda/envs/bito/bin/phylotorch --help
 RUN ln -s /phylotorch/benchmarks/benchmark.py /usr/local/bin/phylotorch-benchmark \
  && chmod +x /usr/local/bin/phylotorch-benchmark
 
-RUN . /opt/conda/etc/profile.d/conda.sh && conda activate bito && cd /bito && make
 RUN git clone --depth 1 https://github.com/4ment/phylotorch-bito /bitorch
 RUN cd /bitorch && /opt/conda/envs/bito/bin/pip install .
 RUN ln -s /bitorch/benchmarks/benchmark.py /usr/local/bin/bitorch-benchmark \
-    && chmod +x /usr/local/bin/bitorch-benchmark
+    && chmod +x /usr/local/bin/bitorch-benchmark && /opt/conda/envs/bito/bin/bitorch-benchmark --help
 
 RUN git clone --depth 1 https://github.com/4ment/phylojax /phylojax
-RUN cd /phylojax && /opt/conda/envs/bito/bin/pip install jax==0.2.20 jaxlib .
+RUN cd /phylojax && /opt/conda/envs/bito/bin/pip install jax==0.2.24 jaxlib . && /opt/conda/envs/bito/bin/phylojax --help
 RUN ln -s /phylojax/benchmarks/benchmark.py /usr/local/bin/phylojax-benchmark \
     && chmod +x /usr/local/bin/phylojax-benchmark
 
 RUN git clone --depth 1 https://github.com/4ment/phylostan /phylostan
-RUN cd /phylostan && pip install .
+RUN cd /phylostan && pip install . && phylostan --help

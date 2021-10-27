@@ -38,7 +38,7 @@ process CONVERT_LSD_NEXUS_TO_NEWICK {
   tuple val(size), val(rep), path("lsd_newick.nxs")
 
   """
-  python $baseDir/scripts/helper.py 2 ${lsd_nexus} lsd_newick.nxs
+  helper.py 2 ${lsd_nexus} lsd_newick.nxs
   """
 }
 
@@ -61,17 +61,17 @@ process CREATE_SUB_FILES {
   output:
   tuple val(size),
           val(rep),
-          path("H3N2_HA_2011_2013_${size}_${rep}.nwk"),
+          path("H3N2_HA_2011_2013_${size}_${rep}.new.nwk"),
           path("H3N2_HA_2011_2013_${size}_${rep}.fasta"),
-          path("H3N2_HA_2011_2013_${size}_${rep}.lsd_dates.txt")
+          path("H3N2_HA_2011_2013_${size}_${rep}.lsd_dates.new.txt")
   """
-  python $baseDir/scripts/helper.py 0 \
-                                    $params.subtrees_alignment \
-                                    $lsd_dates \
-                                    $newick_file \
-                                    H3N2_HA_2011_2013_${size}_${rep}.nwk \
-                                    H3N2_HA_2011_2013_${size}_${rep}.fasta \
-                                    H3N2_HA_2011_2013_${size}_${rep}.lsd_dates.txt
+  helper.py 0 \
+            $params.subtrees_alignment \
+            $lsd_dates \
+            $newick_file \
+            H3N2_HA_2011_2013_${size}_${rep}.new.nwk \
+            H3N2_HA_2011_2013_${size}_${rep}.fasta \
+            H3N2_HA_2011_2013_${size}_${rep}.lsd_dates.new.txt
   """
 }
 

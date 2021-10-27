@@ -30,7 +30,7 @@ process RUN_PHYLOX_BENCHMARK {
   output:
   path("${phylox}.${size}.${rep}.csv")
   """
-  source activate bito
+  conda activate bito
   ${phylox}-benchmark -i $seq_file \
                       -t $lsd_newick \
                       --replicates ${params.replicates} \

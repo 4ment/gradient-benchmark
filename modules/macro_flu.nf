@@ -70,7 +70,7 @@ process PREPARE_PHYSHER {
   output:
   tuple val(size), val(rep), path("physher.json")
   """
-  python $baseDir/scripts/helper.py 1 \
+  helper.py 1 \
                                     $seq_file \
                                     $lsd_newick \
                                     ${lsd_dates} \
@@ -99,7 +99,7 @@ process PREPARE_PHYLOTORCH {
   output:
   tuple val(size), val(rep), path("phylotorch.json"), val(bito)
   """
-  python $baseDir/scripts/helper.py 3 \
+  helper.py 3 \
                                     $seq_file \
                                     $lsd_newick \
                                     ${lsd_dates} \
@@ -118,7 +118,7 @@ process RUN_PHYLOTORCH {
   path("out.txt")
   path("time.log")
   """
-  source activate bito
+  conda activate bito
   { time \
   phylotorch $phylotorch_json > out.txt ; } 2> time.log
   """
@@ -133,7 +133,7 @@ process RUN_PHYLOJAX {
   path("out.txt")
   path("time.log")
   """
-  source activate bito
+  conda activate bito
   { time \
   phylojax -i ${seq_file} \
            -t ${tree_file} \

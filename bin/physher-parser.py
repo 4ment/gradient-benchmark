@@ -8,7 +8,7 @@ regex = re.compile(r".+ ([\d\.]+) ms.*")
 
 def parse_physher(fp):
     for line in fp:
-        if line.startswith("Tree likelihood"):
+        if line.startswith("Tree likelihood unrooted"):
             line = next(fp)
             logp_like = float(regex.match(line).group(1)) / 1000.0
             line = next(fp)
