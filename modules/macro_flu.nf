@@ -10,7 +10,7 @@ use_bito = Channel.of(true, false)
 
 flu_H3N2 = "$baseDir/flu_H3N2"
 physher_jc69_template = "$flu_H3N2/physher-JC69.template"
-phylotorch_jc69_template = "$flu_H3N2/phylotorch-JC69.template"
+torchtree_jc69_template = "$flu_H3N2/phylotorch-JC69.template"
 
 params.subtrees_alignment = "$baseDir/treetime_validation/resources/flu_H3N2/H3N2_HA_2011_2013.fasta"
 
@@ -92,39 +92,43 @@ process RUN_PHYSHER {
   """
 }
 
-process PREPARE_PHYLOTORCH {
+process PREPARE_TORCHTREE {
+  label 'bito'
 
   input:
   tuple val(size), val(rep), path(lsd_newick), path(seq_file), path(lsd_dates), val(bito)
   output:
-  tuple val(size), val(rep), path("phylotorch.json"), val(bito)
+  tuple val(size), val(rep), path("torchtree.json"), val(bito)
   """
   helper.py 3 \
-                                    $seq_file \
-                                    $lsd_newick \
-                                    ${lsd_dates} \
-                                    $phylotorch_jc69_template phylotorch.json \
-                                    ${params.iterations} \
-                                    ${bito}
+            $seq_file \
+            $lsd_newick \
+            ${lsd_dates} \
+            $torchtree_jc69_template torchtree.json \
+            ${params.iterations} \
+            ${bito}
   """
 }
 
-process RUN_PHYLOTORCH {
-  publishDir "$params.results/phylotorch.${bito}.${size}", mode: 'copy'
+process RUN_TORCHTREE {
+  label 'bito'
+
+  publishDir "$params.results/torchtree.${bito}.${size}", mode: 'copy'
 
   input:
-  tuple val(size), val(rep), path(lsd_newick), path(seq_file), path(phylotorch_json), val(bito)
+  tuple val(size), val(rep), path(lsd_newick), path(seq_file), path(torchtree_json), val(bito)
   output:
   path("out.txt")
   path("time.log")
   """
-  conda activate bito
   { time \
-  phylotorch $phylotorch_json > out.txt ; } 2> time.log
+  torchtree $torchtree_json > out.txt ; } 2> time.log
   """
 }
 
 process RUN_PHYLOJAX {
+  label 'bito'
+
   publishDir "$params.results/phylojax.${size}.${rep}", mode: 'copy'
 
   input:
@@ -133,7 +137,6 @@ process RUN_PHYLOJAX {
   path("out.txt")
   path("time.log")
   """
-  conda activate bito
   { time \
   phylojax -i ${seq_file} \
            -t ${tree_file} \
@@ -161,7 +164,7 @@ workflow macro_flu {
 
   RUN_PHYLOJAX(data.map { it.take(4) })
 
-  PREPARE_PHYLOTORCH(data.combine(use_bito))
+  PREPARE_TORCHTREE(data.combine(use_bito))
 
-  RUN_PHYLOTORCH(data.map { it.take(4) }.join(PREPARE_PHYLOTORCH.out, by: [0, 1]))
+  RUN_TORCHTREE(data.map { it.take(4) }.join(PREPARE_TORCHTREE.out, by: [0, 1]))
 }

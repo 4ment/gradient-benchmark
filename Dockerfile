@@ -13,6 +13,7 @@ RUN apt-get update && \
 		libgsl0-dev \
 		libtool \
 		pkg-config \
+		python2.7 \
 		unzip \
 		wget \
 		zlib1g-dev \
@@ -35,7 +36,7 @@ RUN . /opt/conda/etc/profile.d/conda.sh && conda activate bito && cd /bito && ma
 WORKDIR /
 
 # Programs for treetime_validation
-RUN conda create -n treetime -c conda-forge -c bioconda python=2.7 treetime=0.7.4 click
+RUN pip install phylo-treetime==0.7.4 click
 
 RUN wget http://www.microbesonline.org/fasttree/FastTree-2.1.11.c
 RUN gcc -O3 -finline-functions -funroll-loops -Wall -o FastTree FastTree-2.1.11.c -lm && mv FastTree /usr/local/bin
@@ -72,3 +73,6 @@ RUN ln -s /phylojax/benchmarks/benchmark.py /usr/local/bin/phylojax-benchmark \
 
 RUN git clone --depth 1 https://github.com/4ment/phylostan /phylostan
 RUN cd /phylostan && pip install . && phylostan --help
+
+RUN echo "source activate bito" > ~/.bashrc
+ENV PATH /opt/conda/envs/bito/bin:$PATH

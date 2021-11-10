@@ -19,6 +19,8 @@ beast_template = "$params.base/resources/beast/template_bedford_et_al_2015.xml"
 treetime_flu_H3N2 = "$params.base/flu_H3N2/subtree_samples"
 
 process TREETIME_VALIDATION_SUBTREES {
+  label 'treetime'
+
   publishDir "${treetime_flu_H3N2}", mode: 'copy'
 
   input:
@@ -32,8 +34,7 @@ process TREETIME_VALIDATION_SUBTREES {
   path("lsd_res.csv")
   path("beast_res.csv") optional true
   """
-  conda activate treetime
-  python $params.base/generate_flu_subtrees_dataset_run.py --size $size \
+  python2.7 $params.base/generate_flu_subtrees_dataset_run.py --size $size \
                                                            --out_dir dataset \
                                                            --suffix $rep \
                                                            --treetime_file treetime_res.csv \

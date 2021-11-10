@@ -20,9 +20,9 @@ process RUN_PHYSHER_BENCHMARK {
                     -r ${params.replicates} \
                     -s 0.001 \
                     -p ${param} \
-    | physher-parser.py - \
-    | awk 'NR==1{print "program,size,rep,precision,"\$0};
-           NR>1{print "physher$param,$size,$rep,64,"\$0}' \
+                    -o out.csv
+  awk 'NR==1{print "program,size,rep,precision,"\$0}; \
+       NR>1{print "physher$param,$size,$rep,64,"\$0}' out.csv \
     > physher.${size}.${rep}.${param}.csv
   """
 }
@@ -42,7 +42,6 @@ process RUN_PHYLOX_BENCHMARK {
   else
     extra = ""
   """
-  #source activate bito
   ${phylox}-benchmark -i $seq_file \
                       -t $lsd_newick \
                       -r ${params.replicates} \
