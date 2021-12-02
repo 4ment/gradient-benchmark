@@ -14,6 +14,8 @@ RUN apt-get update && \
 		libtool \
 		pkg-config \
 		python2.7 \
+		python-dev \
+		python-tk \
 		unzip \
 		wget \
 		zlib1g-dev \
@@ -28,7 +30,7 @@ RUN ./autogen.sh && ./configure && make install
 ENV BEAGLE_PREFIX /usr/local
 ENV LD_LIBRARY_PATH /usr/local/lib
 
-RUN git clone --depth 1 --branch=main https://github.com/phylovi/bito /bito
+RUN git clone --depth 1 --branch=autodiff-experiments https://github.com/4ment/bito /bito
 WORKDIR /bito
 RUN git submodule update --init --recursive
 RUN conda env create -f environment.yml
@@ -36,7 +38,8 @@ RUN . /opt/conda/etc/profile.d/conda.sh && conda activate bito && cd /bito && ma
 WORKDIR /
 
 # Programs for treetime_validation
-RUN pip install phylo-treetime==0.7.4 click
+RUN wget https://bootstrap.pypa.io/pip/2.7/get-pip.py && python2.7 get-pip.py
+RUN pip2 install phylo-treetime==0.7.4 click biopython==1.76
 
 RUN wget http://www.microbesonline.org/fasttree/FastTree-2.1.11.c
 RUN gcc -O3 -finline-functions -funroll-loops -Wall -o FastTree FastTree-2.1.11.c -lm && mv FastTree /usr/local/bin

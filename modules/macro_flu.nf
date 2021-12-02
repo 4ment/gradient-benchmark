@@ -12,8 +12,6 @@ flu_H3N2 = "$baseDir/flu_H3N2"
 physher_jc69_template = "$flu_H3N2/physher-JC69.template"
 torchtree_jc69_template = "$flu_H3N2/phylotorch-JC69.template"
 
-params.subtrees_alignment = "$baseDir/treetime_validation/resources/flu_H3N2/H3N2_HA_2011_2013.fasta"
-
 
 process COMPILE_PHYLOSTAN {
   input:

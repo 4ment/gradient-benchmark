@@ -11,19 +11,18 @@ process RUN_PHYSHER_BENCHMARK {
   publishDir "$params.results/micro/physher", mode: 'copy'
 
   input:
-  tuple val(size), val(rep), path(lsd_newick), path(seq_file), val(param)
+  tuple val(size), val(rep), path(lsd_newick), path(seq_file)
   output:
-  path("physher.${size}.${rep}.${param}.csv")
+  path("physher.${size}.${rep}.csv")
   """
   physher-benchmark -i ${seq_file} \
                     -t ${lsd_newick} \
                     -r ${params.replicates} \
                     -s 0.001 \
-                    -p ${param} \
                     -o out.csv
   awk 'NR==1{print "program,size,rep,precision,"\$0}; \
-       NR>1{print "physher$param,$size,$rep,64,"\$0}' out.csv \
-    > physher.${size}.${rep}.${param}.csv
+       NR>1{print "physher,$size,$rep,64,"\$0}' out.csv \
+    > physher.${size}.${rep}.csv
   """
 }
 
@@ -72,7 +71,7 @@ workflow micro {
   take:
   data
   main:
-  RUN_PHYSHER_BENCHMARK(data.combine(Channel.of(0, 1)))
+  RUN_PHYSHER_BENCHMARK(data)
 
   RUN_PHYLOX_BENCHMARK(data.combine(phylox).combine(
           Channel.of("64")).mix(data.combine(Channel.of(['torchtree', "32"]))))

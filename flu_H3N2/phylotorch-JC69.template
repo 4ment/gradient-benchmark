@@ -85,7 +85,7 @@
     {
       "id": "oneonx",
       "type": "Distribution",
-      "distribution": "phylotorch.distributions.one_on_x.OneOnX",
+      "distribution": "OneOnX",
       "x": "theta"
     },
     {
