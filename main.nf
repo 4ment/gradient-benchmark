@@ -11,6 +11,7 @@ include { micro } from "./modules/micro.nf"
 include { macro_flu } from "./modules/macro_flu.nf"
 
 process RUN_LSD {
+  label 'auto_diff_exp'
   input:
   tuple val(size),
           val(rep),
@@ -32,6 +33,7 @@ process RUN_LSD {
 }
 
 process CONVERT_LSD_NEXUS_TO_NEWICK {
+  label 'auto_diff_exp'
   input:
   tuple val(size), val(rep), path(lsd_nexus)
   output:
@@ -55,6 +57,7 @@ def group_per_size_rep(newick_ch, create_sub_ch) {
 }
 
 process CREATE_SUB_FILES {
+  label 'auto_diff_exp'
 
   input:
   tuple val(size), val(rep), path(lsd_dates), path(newick_file)
@@ -89,7 +92,7 @@ workflow {
           CONVERT_LSD_NEXUS_TO_NEWICK.out,
           CREATE_SUB_FILES.out)
 
-  macro_flu(data)
+  // macro_flu(data)
 
   micro(data.map { it.take(4) })
 }
