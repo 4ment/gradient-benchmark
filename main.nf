@@ -92,7 +92,8 @@ workflow {
           CONVERT_LSD_NEXUS_TO_NEWICK.out,
           CREATE_SUB_FILES.out)
 
-  macro_flu(data)
+  // macro_flu(data)
+  //micro(data)
 
   micro(data.map { it.take(4) })
 }

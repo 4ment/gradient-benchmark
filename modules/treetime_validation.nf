@@ -2,7 +2,7 @@
 
 nextflow.enable.dsl = 2
 
-params.subtrees = Channel.of(20, 50, 100, 200, 500, 750, 1000, 1250, 1500, 2000)
+params.subtrees = Channel.of(20, 50, 100, 200, 500, 750, 1000, 1250) //, 1500, 2000)
 params.subtrees_replicates = Channel.of(0..9)
 
 if(params.enable_beast){
@@ -19,6 +19,7 @@ beast_template = "$params.base/resources/beast/template_bedford_et_al_2015.xml"
 treetime_flu_H3N2 = "$params.base/flu_H3N2/subtree_samples"
 
 process TREETIME_VALIDATION_SUBTREES {
+  label 'auto_diff_exp'
   label 'treetime'
 
   publishDir "${treetime_flu_H3N2}", mode: 'copy'
