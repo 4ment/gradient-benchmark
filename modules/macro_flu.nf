@@ -32,7 +32,7 @@ process COMPILE_PHYLOSTAN {
 }
 
 process RUN_PHYLOSTAN {
-  publishDir "$params.results/phylostan.${size}", mode: 'copy'
+  publishDir "$params.results/macro/phylostan", mode: 'copy'
 
   input:
   tuple val(size), val(rep), path(tree_file), path(seq_file)
@@ -41,7 +41,7 @@ process RUN_PHYLOSTAN {
   output:
   path 'phylostan', emit: phylostan_out
   path("out.txt")
-  path("time.log")
+  path("phylostan.${size}.${rep}.log")
   """
   { time \
   phylostan run -i ${seq_file} \
@@ -57,7 +57,7 @@ process RUN_PHYLOSTAN {
                 --eta 0.01 \
                 --tol_rel_obj 0.00000001 \
                 --elbo_samples 1 \
-                --samples 1 > out.txt ; } 2> time.log
+                --samples 1 > out.txt ; } 2> phylostan.${size}.${rep}.log & exit 0
   """
 }
 
@@ -78,15 +78,15 @@ process PREPARE_PHYSHER {
 }
 
 process RUN_PHYSHER {
-  publishDir "$params.results/physher.${size}", mode: 'copy'
+  publishDir "$params.results/macro/physher", mode: 'copy'
 
   input:
   tuple val(size), val(rep), path(lsd_newick), path(seq_file), path(physher_json)
   output:
   path("out.txt")
-  path("time.log")
+  path("physher.${size}.${rep}.log")
   """
-  { time physher $physher_json > out.txt ; } 2> time.log
+  { time physher $physher_json > out.txt ; } 2> physher.${size}.${rep}.log
   """
 }
 
@@ -111,29 +111,29 @@ process PREPARE_TORCHTREE {
 process RUN_TORCHTREE {
   label 'bito'
 
-  publishDir "$params.results/torchtree.${bito}.${size}", mode: 'copy'
+  publishDir "$params.results/macro/torchtree", mode: 'copy'
 
   input:
   tuple val(size), val(rep), path(lsd_newick), path(seq_file), path(torchtree_json), val(bito)
   output:
   path("out.txt")
-  path("time.log")
+  path("torchtree.${bito}.${size}.${rep}.log")
   """
   { time \
-  torchtree $torchtree_json > out.txt ; } 2> time.log
+  torchtree $torchtree_json > out.txt ; } 2> torchtree.${bito}.${size}.${rep}.log
   """
 }
 
 process RUN_PHYLOJAX {
   label 'bito'
 
-  publishDir "$params.results/phylojax.${size}.${rep}", mode: 'copy'
+  publishDir "$params.results/macro/phylojax", mode: 'copy'
 
   input:
   tuple val(size), val(rep), path(tree_file), path(seq_file)
   output:
   path("out.txt")
-  path("time.log")
+  path("phylojax.${size}.${rep}.log")
   """
   { time \
   phylojax -i ${seq_file} \
@@ -141,7 +141,7 @@ process RUN_PHYLOJAX {
            --iter ${params.iterations} \
            --eta 0.01 \
            --elbo_samples 1 \
-           --grad_samples 1 > out.txt ; } 2> time.log
+           --grad_samples 1 > out.txt ; } 2> phylojax.${size}.${rep}.log
   """
 }
 
