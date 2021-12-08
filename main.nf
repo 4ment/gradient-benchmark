@@ -93,7 +93,6 @@ workflow {
           CREATE_SUB_FILES.out)
 
   // macro_flu(data)
-  //micro(data)
 
   micro(data.map { it.take(4) })
 }
