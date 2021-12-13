@@ -14,7 +14,6 @@ torchtree_jc69_template = "$flu_H3N2/phylotorch-JC69.template"
 
 
 process COMPILE_PHYLOSTAN {
-  label 'auto_diff_exp'
   input:
   val(name)
   val(model)
@@ -34,7 +33,6 @@ process COMPILE_PHYLOSTAN {
 
 process RUN_PHYLOSTAN {
   publishDir "$params.results/macro/phylostan", mode: 'copy'
-  label 'auto_diff_exp'
 
   input:
   tuple val(size), val(rep), path(tree_file), path(seq_file)
@@ -64,7 +62,6 @@ process RUN_PHYLOSTAN {
 }
 
 process PREPARE_PHYSHER {
-  label 'auto_diff_exp'
 
   input:
   tuple val(size), val(rep), path(lsd_newick), path(seq_file), path(lsd_dates)
@@ -82,7 +79,6 @@ process PREPARE_PHYSHER {
 
 process RUN_PHYSHER {
   publishDir "$params.results/macro/physher", mode: 'copy'
-  label 'auto_diff_exp'
 
   input:
   tuple val(size), val(rep), path(lsd_newick), path(seq_file), path(physher_json)
@@ -95,7 +91,6 @@ process RUN_PHYSHER {
 }
 
 process PREPARE_TORCHTREE {
-  label 'auto_diff_exp'
   label 'bito'
 
   input:
@@ -114,7 +109,6 @@ process PREPARE_TORCHTREE {
 }
 
 process RUN_TORCHTREE {
-  label 'auto_diff_exp'
   label 'bito'
 
   publishDir "$params.results/macro/torchtree", mode: 'copy'
@@ -131,7 +125,6 @@ process RUN_TORCHTREE {
 }
 
 process RUN_PHYLOJAX {
-  label 'auto_diff_exp'
   label 'bito'
 
   publishDir "$params.results/macro/phylojax", mode: 'copy'
