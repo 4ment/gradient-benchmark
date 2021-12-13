@@ -11,7 +11,6 @@ include { micro } from "./modules/micro.nf"
 include { macro_flu } from "./modules/macro_flu.nf"
 
 process RUN_LSD {
-  label 'auto_diff_exp'
   input:
   tuple val(size),
           val(rep),
@@ -33,7 +32,6 @@ process RUN_LSD {
 }
 
 process CONVERT_LSD_NEXUS_TO_NEWICK {
-  label 'auto_diff_exp'
   input:
   tuple val(size), val(rep), path(lsd_nexus)
   output:
