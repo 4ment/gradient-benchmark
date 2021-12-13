@@ -33,6 +33,7 @@ process COMPILE_PHYLOSTAN {
 }
 
 process RUN_PHYLOSTAN {
+  label 'auto_diff_exp'
   publishDir "$params.results/macro/phylostan", mode: 'copy'
   label 'auto_diff_exp'
 
@@ -81,8 +82,11 @@ process PREPARE_PHYSHER {
 }
 
 process RUN_PHYSHER {
+
+  label 'auto_diff_exp'
   publishDir "$params.results/macro/physher", mode: 'copy'
   label 'auto_diff_exp'
+
 
   input:
   tuple val(size), val(rep), path(lsd_newick), path(seq_file), path(physher_json)
