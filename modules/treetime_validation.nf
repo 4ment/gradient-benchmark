@@ -19,7 +19,6 @@ beast_template = "$params.base/resources/beast/template_bedford_et_al_2015.xml"
 treetime_flu_H3N2 = "$params.base/flu_H3N2/subtree_samples"
 
 process TREETIME_VALIDATION_SUBTREES {
-  label 'auto_diff_exp'
   label 'treetime'
 
   publishDir "${treetime_flu_H3N2}", mode: 'copy'
