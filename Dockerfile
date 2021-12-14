@@ -77,8 +77,8 @@ RUN ln -s /phylojax/benchmarks/benchmark.py /usr/local/bin/phylojax-benchmark \
 RUN git clone --depth 1 https://github.com/4ment/phylostan /phylostan
 RUN cd /phylostan && pip install . && phylostan --help
 
-RUN git clone -b benchmark-cli --depth 1 https://github.com/christiaanjs/treeflow.git /treeflow
-RUN cd /treeflow && /opt/conda/envs/bito/bin/pip install . 
+RUN git clone --depth 1 https://github.com/christiaanjs/treeflow.git /treeflow
+RUN cd /treeflow && /opt/conda/envs/bito/bin/pip install .[benchmark]
 RUN . /opt/conda/etc/profile.d/conda.sh && conda activate bito && treeflow_benchmark --help
 
 
