@@ -4,21 +4,21 @@ LABEL "company"="University of Technology Sydney"
 
 RUN apt-get update && \
 	apt-get install -y --no-install-recommends \
-	autoconf \
-	automake \
-	build-essential \
-	cmake \
-	default-jdk \
-	git \
-	libgsl0-dev \
-	libtool \
-	pkg-config \
-	python2.7 \
-	python-dev \
-	python-tk \
-	unzip \
-	wget \
-	zlib1g-dev \
+		autoconf \
+		automake \
+		build-essential \
+		cmake \
+		default-jdk \
+		git \
+		libgsl0-dev \
+		libtool \
+		pkg-config \
+		python2.7 \
+		python-dev \
+		python-tk \
+		unzip \
+		wget \
+		zlib1g-dev \
 	&& apt-get clean \
 	&& rm -rf /var/lib/apt/lists/*
 
@@ -61,26 +61,25 @@ WORKDIR /
 RUN git clone --depth 1 https://github.com/4ment/torchtree /torchtree
 RUN cd /torchtree && /opt/conda/envs/bito/bin/pip install . && /opt/conda/envs/bito/bin/torchtree --help
 RUN ln -s /torchtree/benchmarks/benchmark.py /usr/local/bin/torchtree-benchmark \
-	&& chmod +x /usr/local/bin/torchtree-benchmark
+    && chmod +x /usr/local/bin/torchtree-benchmark
 
 RUN git clone --depth 1 https://github.com/4ment/torchtree-bito /bitorch
 RUN cd /bitorch && /opt/conda/envs/bito/bin/pip install .
 RUN ln -s /bitorch/benchmarks/benchmark.py /usr/local/bin/bitorch-benchmark \
-	&& chmod +x /usr/local/bin/bitorch-benchmark
+    && chmod +x /usr/local/bin/bitorch-benchmark
 RUN . /opt/conda/etc/profile.d/conda.sh && conda activate bito && /usr/local/bin/bitorch-benchmark --help
 
 RUN git clone --depth 1 https://github.com/4ment/phylojax /phylojax
 RUN cd /phylojax && /opt/conda/envs/bito/bin/pip install jax==0.2.24 jaxlib . && /opt/conda/envs/bito/bin/phylojax --help
 RUN ln -s /phylojax/benchmarks/benchmark.py /usr/local/bin/phylojax-benchmark \
-	&& chmod +x /usr/local/bin/phylojax-benchmark
+    && chmod +x /usr/local/bin/phylojax-benchmark
 
 RUN git clone --depth 1 https://github.com/4ment/phylostan /phylostan
 RUN cd /phylostan && pip install . && phylostan --help
 
-RUN git clone --depth 1 https://github.com/christiaanjs/treeflow.git /treeflow
-RUN cd /treeflow && /opt/conda/envs/bito/bin/pip install .[benchmark]
+RUN git clone -b benchmark-cli --depth 1 https://github.com/christiaanjs/treeflow.git /treeflow
+RUN cd /treeflow && /opt/conda/envs/bito/bin/pip install . 
 RUN . /opt/conda/etc/profile.d/conda.sh && conda activate bito && treeflow_benchmark --help
-
 
 RUN echo "source activate bito" > ~/.bashrc
 ENV PATH /opt/conda/envs/bito/bin:$PATH
