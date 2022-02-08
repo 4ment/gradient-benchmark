@@ -145,6 +145,21 @@ process RUN_PHYLOJAX {
   """
 }
 
+process RUN_TREEFLOW {
+  publishDir "$params.results/macro/treeflow", mode: 'copy'
+
+  input:
+  tuple val(size), val(rep), path(tree_file), path(seq_file)
+  output:
+  path("out.txt")
+  path("treeflow.${size}.${rep}.log")
+  """
+  { time \
+  treeflow_vi -i ${seq_file} \
+              -t ${tree_file} \
+              -n ${params.iterations} > out.txt ; } 2> treeflow.${size}.${rep}.log
+  """
+}
 workflow macro_flu {
   take:
   data
@@ -165,4 +180,6 @@ workflow macro_flu {
   PREPARE_TORCHTREE(data.combine(use_bito))
 
   RUN_TORCHTREE(data.map { it.take(4) }.join(PREPARE_TORCHTREE.out, by: [0, 1]))
+
+  RUN_TREEFLOW(data.map { it.take(4) })
 }
