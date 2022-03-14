@@ -53,6 +53,28 @@ process RUN_PHYLOX_BENCHMARK {
   """
 }
 
+process RUN_TREEFLOW_BENCHMARK {
+  label 'bito'
+
+  publishDir "$params.results/micro/treeflow", mode: 'copy'
+
+  input:
+  tuple val(size), val(rep), path(lsd_newick), path(seq_file)
+  output:
+  path("treeflow.${size}.${rep}.csv")
+  """
+  treeflow_benchmark -i $seq_file \
+                      -t $lsd_newick \
+                      -r ${params.replicates} \
+                      -s 0.001 \
+                      -o out.csv
+  awk 'NR==1{print "program,size,rep,precision,"\$0}; \
+       NR>1{print "treeflow,$size,$rep,64,"\$0}' out.csv \
+      > treeflow.${size}.${rep}.csv
+  """
+
+}
+
 process COMBIME_CSV {
   publishDir "$params.results/micro/", mode: 'copy'
 
@@ -74,11 +96,14 @@ workflow micro {
   RUN_PHYSHER_BENCHMARK(data)
 
   RUN_PHYLOX_BENCHMARK(data.combine(phylox).combine(
-          Channel.of("64")).mix(data.combine(Channel.of(['torchtree', "32"]))))
+    Channel.of("64")).mix(data.combine(Channel.of(['torchtree', "32"]))))
+
+  RUN_TREEFLOW_BENCHMARK(data)
 
   ch_files = Channel.empty()
   ch_files = ch_files.mix(
           RUN_PHYSHER_BENCHMARK.out.collect(),
-          RUN_PHYLOX_BENCHMARK.out.collect())
+          RUN_PHYLOX_BENCHMARK.out.collect(),
+          RUN_TREEFLOW_BENCHMARK.out.collect())
   COMBIME_CSV(ch_files.collect())
 }
