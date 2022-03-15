@@ -160,6 +160,37 @@ process RUN_TREEFLOW {
               -n ${params.iterations} > out.txt ; } 2> treeflow.${size}.${rep}.log
   """
 }
+
+process COMBIME_TIME_LOG {
+  publishDir "$params.results/macro/", mode: 'copy'
+
+  input:
+  path files
+  output:
+  path("macro.csv")
+
+  """
+  #!/usr/bin/env python
+  import re
+  
+  pattern_time = re.compile(r'Time: (\\d+\\.\\d+)')
+  with open('macro.csv', 'w') as fpo:
+      for file_path in ${files}:
+          with open(file_path, 'r') as fp:
+            for line in fp:
+                line = line.rstrip('\\n').rstrip('\\r')
+                mt = pattern_time.match(line)
+                if mt:
+                    total_time = mt.group(1)
+                    a = file_path.rstrip('.log').split('.')
+                    if a[0] == 'torchtree':
+                        if a[1] == 'true':
+                            a[0] = 'bitorch'
+                        del a[1]
+                    fpo.write(a.join(',') + '\n')
+  """
+}
+
 workflow macro_flu {
   take:
   data

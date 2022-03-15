@@ -8,6 +8,8 @@ params.results = "results"
 phylox = Channel.of("torchtree", "bitorch", "phylojax")
 
 process RUN_PHYSHER_BENCHMARK {
+  label 'fast'
+
   publishDir "$params.results/micro/physher", mode: 'copy'
 
   input:
@@ -27,6 +29,7 @@ process RUN_PHYSHER_BENCHMARK {
 }
 
 process RUN_PHYLOX_BENCHMARK {
+  label 'normal'
   label 'bito'
 
   publishDir "$params.results/micro/${phylox}", mode: 'copy'
@@ -54,6 +57,7 @@ process RUN_PHYLOX_BENCHMARK {
 }
 
 process RUN_TREEFLOW_BENCHMARK {
+  label 'normal'
   label 'bito'
 
   publishDir "$params.results/micro/treeflow", mode: 'copy'
@@ -76,6 +80,8 @@ process RUN_TREEFLOW_BENCHMARK {
 }
 
 process COMBIME_CSV {
+  label 'ultrafast'
+
   publishDir "$params.results/micro/", mode: 'copy'
 
   input:
@@ -85,7 +91,7 @@ process COMBIME_CSV {
 
   """
   head -n1 ${files[0]} > micro.csv
-  tail -q -n+2 *.csv >> micro.csv
+  tail -q -n+2 *[0-9].csv >> micro.csv
   """
 }
 
