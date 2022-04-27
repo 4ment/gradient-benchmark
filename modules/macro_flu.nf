@@ -7,7 +7,7 @@ params.iterations = 5000
 
 use_bito = Channel.of(true, false)
 
-clock_rate = 0.002
+clock_rate = 0.002 // could be parsed from lsd ouput file
 
 flu_H3N2 = "$baseDir/flu_H3N2"
 physher_jc69_template = "$flu_H3N2/physher-JC69.template"
@@ -40,22 +40,24 @@ process RUN_PHYLOSTAN {
   path phylostan_stan
   path phylostan_pkl
   output:
-  path "phylostan.${size}.${rep}", emit: phylostan_out
-  path("phylostan.${size}.${rep}.out")
+  path("phylostan.${size}.${rep}.txt")
   path("phylostan.${size}.${rep}.log")
+  path "phylostan.${size}.${rep}", emit: phylostan_out
+  path("phylostan.${size}.${rep}.diag")
   """
   { time \
   phylostan run -i ${seq_file} \
                 -t ${tree_file} \
                 -s ${phylostan_stan} \
-                -o phylostan \
+                -o phylostan.${size}.${rep} \
                 -m JC69 \
                 --heterochronous \
                 --estimate_rate \
                 --clock strict \
-                 -c constant \
+                --clockpr exponential \
+                -c constant \
                 --iter ${params.iterations}  \
-                --eta 0.01 \
+                --eta 0.0001 \
                 --tol_rel_obj 0.00000001 \
                 --elbo_samples 1 \
                 --samples 1 > phylostan.${size}.${rep}.txt ; } 2> phylostan.${size}.${rep}.log & exit 0
@@ -63,6 +65,7 @@ process RUN_PHYLOSTAN {
 }
 
 process PREPARE_PHYSHER {
+  publishDir "$params.results/macro/physher", mode: 'copy'
 
   input:
   tuple val(size), val(rep), path(lsd_newick), path(seq_file), path(lsd_dates)
@@ -95,6 +98,8 @@ process RUN_PHYSHER {
 process PREPARE_TORCHTREE {
   label 'bito'
 
+  publishDir "$params.results/macro/torchtree", mode: 'copy'
+
   input:
   tuple val(size), val(rep), path(lsd_newick), path(seq_file), path(lsd_dates), val(bito)
   output:
@@ -115,7 +120,8 @@ process PREPARE_TORCHTREE {
                 --clockpr exponential \
                 --eta 0.0001 \
                 --elbo_samples 1 \
-                --iter ${params.iterations}
+                --tol_rel_obj 0 \
+                --iter ${params.iterations} \
                 ${bito_arg} > torchtree.${bito}.${size}.${rep}.json
   """
 }
@@ -132,7 +138,7 @@ process RUN_TORCHTREE {
   path("torchtree.${bito}.${size}.${rep}.log")
   """
   { time \
-  torchtree $torchtree_json > torchtree.${bito}.${size}.${rep}.txt ; } 2> torchtree.${bito}.${size}.${rep}.log
+  torchtree $torchtree_json > torchtree.${bito}.${size}.${rep}.txt ; } 2> torchtree.${bito}.${size}.${rep}.log & exit 0
   """
 }
 
@@ -186,24 +192,7 @@ process COMBIME_TIME_LOG {
   path("macro.csv")
 
   """
-  #!/usr/bin/env python
-  import re
-  
-  pattern_time = re.compile(r'Time: (\\d+\\.\\d+)')
-  with open('macro.csv', 'w') as fpo:
-      for file_path in ${files}:
-          with open(file_path, 'r') as fp:
-            for line in fp:
-                line = line.rstrip('\\n').rstrip('\\r')
-                mt = pattern_time.match(line)
-                if mt:
-                    total_time = mt.group(1)
-                    a = file_path.rstrip('.log').split('.')
-                    if a[0] == 'torchtree':
-                        if a[1] == 'true':
-                            a[0] = 'bitorch'
-                        del a[1]
-                    fpo.write(a.join(',') + '\n')
+  time-parser.py macro.csv ${files}
   """
 }
 
@@ -229,4 +218,13 @@ workflow macro_flu {
   RUN_TORCHTREE(data.map { it.take(4) }.join(PREPARE_TORCHTREE.out, by: [0, 1]))
 
   RUN_TREEFLOW(data.map { it.take(4) })
+
+  ch_files = Channel.empty().mix(
+        RUN_PHYSHER.out[1].collect(),
+        RUN_PHYLOJAX.out[1].collect(),
+        RUN_PHYLOSTAN.out[1]].collect(),
+        RUN_TORCHTREE.out[1].collect()),
+        RUN_TREEFLOW.out[1].collect())
+
+  COMBIME_TIME_LOG(ch_files.collect())
 }
