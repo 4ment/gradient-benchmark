@@ -43,6 +43,9 @@ process RUN_PHYLOX_BENCHMARK {
     extra = " -d float32"
   else
     extra = ""
+  
+  if (phylox != "phylojax")
+    extra += " --gtr"
   """
   ${phylox}-benchmark -i $seq_file \
                       -t $lsd_newick \

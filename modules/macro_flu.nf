@@ -11,10 +11,11 @@ clock_rate = 0.002 // could be parsed from lsd ouput file
 
 flu_H3N2 = "$baseDir/flu_H3N2"
 physher_jc69_template = "$flu_H3N2/physher-JC69.template"
-torchtree_jc69_template = "$flu_H3N2/phylotorch-JC69.template"
 
 
 process COMPILE_PHYLOSTAN {
+  label 'bito'
+
   input:
   val(name)
   val(model)
@@ -33,6 +34,10 @@ process COMPILE_PHYLOSTAN {
 }
 
 process RUN_PHYLOSTAN {
+  label 'bito'
+
+  errorStrategy 'ignore'
+
   publishDir "$params.results/macro/phylostan", mode: 'copy'
 
   input:
@@ -40,8 +45,7 @@ process RUN_PHYLOSTAN {
   path phylostan_stan
   path phylostan_pkl
   output:
-  path("phylostan.${size}.${rep}.txt")
-  path("phylostan.${size}.${rep}.log")
+  tuple path("phylostan.${size}.${rep}.txt"), path("phylostan.${size}.${rep}.log")
   path "phylostan.${size}.${rep}", emit: phylostan_out
   path("phylostan.${size}.${rep}.diag")
   """
@@ -60,7 +64,7 @@ process RUN_PHYLOSTAN {
                 --eta 0.0001 \
                 --tol_rel_obj 0.00000001 \
                 --elbo_samples 1 \
-                --samples 1 > phylostan.${size}.${rep}.txt ; } 2> phylostan.${size}.${rep}.log & exit 0
+                --samples 1 > phylostan.${size}.${rep}.txt ; } 2> phylostan.${size}.${rep}.log
   """
 }
 
@@ -88,8 +92,7 @@ process RUN_PHYSHER {
   input:
   tuple val(size), val(rep), path(lsd_newick), path(seq_file), path(physher_json)
   output:
-  path("physher.${size}.${rep}.txt")
-  path("physher.${size}.${rep}.log")
+  tuple path("physher.${size}.${rep}.txt"), path("physher.${size}.${rep}.log")
   """
   { time physher $physher_json > physher.${size}.${rep}.txt ; } 2> physher.${size}.${rep}.log
   """
@@ -106,7 +109,7 @@ process PREPARE_TORCHTREE {
   tuple val(size), val(rep), path("torchtree.${bito}.${size}.${rep}.json"), val(bito)
   script:
   if (bito)
-    bito_arg = " --engine bito"
+    bito_arg = " --engine bitorch"
   else
     bito_arg = ""
   """
@@ -122,6 +125,7 @@ process PREPARE_TORCHTREE {
                 --elbo_samples 1 \
                 --tol_rel_obj 0 \
                 --iter ${params.iterations} \
+                --samples 0 \
                 ${bito_arg} > torchtree.${bito}.${size}.${rep}.json
   """
 }
@@ -129,29 +133,31 @@ process PREPARE_TORCHTREE {
 process RUN_TORCHTREE {
   label 'bito'
 
+  errorStrategy 'ignore'
+
   publishDir "$params.results/macro/torchtree", mode: 'copy'
 
   input:
   tuple val(size), val(rep), path(lsd_newick), path(seq_file), path(torchtree_json), val(bito)
   output:
-  path("torchtree.${bito}.${size}.${rep}.txt")
-  path("torchtree.${bito}.${size}.${rep}.log")
+  tuple path("torchtree.${bito}.${size}.${rep}.txt"), path("torchtree.${bito}.${size}.${rep}.log")
   """
   { time \
-  torchtree $torchtree_json > torchtree.${bito}.${size}.${rep}.txt ; } 2> torchtree.${bito}.${size}.${rep}.log & exit 0
+  torchtree $torchtree_json > torchtree.${bito}.${size}.${rep}.txt ; } 2> torchtree.${bito}.${size}.${rep}.log
   """
 }
 
 process RUN_PHYLOJAX {
   label 'bito'
 
+  errorStrategy 'ignore'
+
   publishDir "$params.results/macro/phylojax", mode: 'copy'
 
   input:
   tuple val(size), val(rep), path(tree_file), path(seq_file)
   output:
-  path("phylojax.${size}.${rep}.txt")
-  path("phylojax.${size}.${rep}.log")
+  tuple path("phylojax.${size}.${rep}.txt"), path("phylojax.${size}.${rep}.log")
   """
   { time \
   phylojax -i ${seq_file} \
@@ -173,8 +179,7 @@ process RUN_TREEFLOW {
   input:
   tuple val(size), val(rep), path(tree_file), path(seq_file)
   output:
-  path("treeflow.${size}.${rep}.txt")
-  path("treeflow.${size}.${rep}.log")
+  tuple path("treeflow.${size}.${rep}.txt"), path("treeflow.${size}.${rep}.log")
   """
   { time \
   treeflow_vi -i ${seq_file} \
@@ -219,12 +224,13 @@ workflow macro_flu {
 
   RUN_TREEFLOW(data.map { it.take(4) })
 
-  ch_files = Channel.empty().mix(
-        RUN_PHYSHER.out[1].collect(),
-        RUN_PHYLOJAX.out[1].collect(),
-        RUN_PHYLOSTAN.out[1]].collect(),
-        RUN_TORCHTREE.out[1].collect()),
-        RUN_TREEFLOW.out[1].collect())
+  ch_files = Channel.empty()
+  ch_files = ch_files.mix(
+        RUN_PHYSHER.out.collect(),
+        RUN_PHYLOJAX.out.collect(),
+        RUN_PHYLOSTAN.out[0].collect(),
+        RUN_TORCHTREE.out.collect(),
+        RUN_TREEFLOW.out.collect())
 
   COMBIME_TIME_LOG(ch_files.collect())
 }

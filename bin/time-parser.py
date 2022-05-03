@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import csv
 import os
 import re
 import sys
@@ -18,24 +19,14 @@ def parse(file_name, pattern):
 
 
 pattern_time = re.compile(r"real\s+(?:(\d+)h)?(\d+)m(\d+\.?\d*)s")
-with open(sys.argv[1], "w") as fpo:
-    fpo.write("program,size,rep,time,iters,elbo\n")
-    for file_path in sys.argv[2:]:
-        a = file_path.rstrip(".log").split(".")
-        a[0] = os.path.basename(a[0])
-        if a[0] == "torchtree":
-            pattern_elbo = re.compile(r"\s+(\d+)\s+(-\d+\.\d+).+")
-        elif a[0] == "phylostan":
-            #    100       -23766.035             1.000            1.000
-            pattern_elbo = re.compile(r"\s+(\d+)\s+(-\d+\.\d+).+")
-        elif a[0] == "physher":
-            pattern_elbo = re.compile(r"(\d+)\s+ELBO:\s+(-\d+\.\d+).+")
-        elif a[0] == "phylojax":
-            pattern_elbo = re.compile(r"(\d+)\s+ELBO\s+(-\d+\.\d+).+")
-        else:
-            pattern_elbo = re.compile("sdfasdf")
-        iters, elbo = parse(file_path.replace("log", "txt"), pattern_elbo)
+times = {}
+elbos = {}
+for file_path in sys.argv[2:]:
+    name = file_path.rstrip(".log").rstrip(".txt")
+    a = name.split(".")
+    a[0] = os.path.basename(a[0])
 
+    if file_path.endswith(".log"):
         with open(file_path, "r") as fp:
             for line in fp:
                 line = line.rstrip("\\n").rstrip("\\r")
@@ -50,5 +41,25 @@ with open(sys.argv[1], "w") as fpo:
                         if a[1] == "true":
                             a[0] = "bitorch"
                         del a[1]
-                    a.extend([str(time_sec), iters, elbo])
-                    fpo.write(",".join(a) + "\n")
+                    a.append(str(time_sec))
+                    times[name] = a
+    else:
+        if a[0] == "torchtree":
+            pattern_elbo = re.compile(r"\s+(\d+)\s+(-\d+\.\d+).+")
+        elif a[0] == "phylostan":
+            #    100       -23766.035             1.000            1.000
+            pattern_elbo = re.compile(r"\s+(\d+)\s+(-\d+\.\d+).+")
+        elif a[0] == "physher":
+            pattern_elbo = re.compile(r"(\d+)\s+ELBO:\s+(-\d+\.\d+).+")
+        elif a[0] == "phylojax":
+            pattern_elbo = re.compile(r"(\d+)\s+ELBO\s+(-\d+\.\d+).+")
+        else:
+            pattern_elbo = re.compile("sdfasdf")
+        iters, elbo = parse(file_path.replace("log", "txt"), pattern_elbo)
+        elbos[name] = [iters, elbo]
+
+with open(sys.argv[1], "w") as csv_file:
+    writer = csv.writer(csv_file)
+    writer.writerow(["program", "size", "rep", "time", "iters", "elbo"])
+    for name, time in times.items():
+        writer.writerow(time + elbos[name])

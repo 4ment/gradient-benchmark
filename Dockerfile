@@ -30,7 +30,7 @@ RUN ./autogen.sh && ./configure && make install
 ENV BEAGLE_PREFIX /usr/local
 ENV LD_LIBRARY_PATH /usr/local/lib
 
-RUN git clone --depth 1 --branch=autodiff-experiments https://github.com/4ment/bito /bito
+RUN git clone --depth 1 https://github.com/phylovi/bito /bito
 WORKDIR /bito
 RUN git submodule update --init --recursive
 RUN conda env create -f environment.yml
@@ -75,7 +75,8 @@ RUN ln -s /phylojax/benchmarks/benchmark.py /usr/local/bin/phylojax-benchmark \
     && chmod +x /usr/local/bin/phylojax-benchmark
 
 RUN git clone --depth 1 https://github.com/4ment/phylostan /phylostan
-RUN cd /phylostan && pip install . && phylostan --help
+RUN cd /phylostan && /opt/conda/envs/bito/bin/pip install .
+RUN . /opt/conda/etc/profile.d/conda.sh && conda activate bito && phylostan --help
 
 RUN git clone --depth 1 https://github.com/christiaanjs/treeflow.git /treeflow
 RUN cd /treeflow && /opt/conda/envs/bito/bin/pip install . 
