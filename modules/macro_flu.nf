@@ -14,8 +14,6 @@ physher_jc69_template = "$flu_H3N2/physher-JC69.template"
 
 
 process COMPILE_PHYLOSTAN {
-  label 'bito'
-
   input:
   val(name)
   val(model)
@@ -34,8 +32,6 @@ process COMPILE_PHYLOSTAN {
 }
 
 process RUN_PHYLOSTAN {
-  label 'bito'
-
   errorStrategy 'ignore'
 
   publishDir "$params.results/macro/phylostan", mode: 'copy'
