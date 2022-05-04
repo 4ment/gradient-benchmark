@@ -14,6 +14,8 @@ physher_jc69_template = "$flu_H3N2/physher-JC69.template"
 
 
 process COMPILE_PHYLOSTAN {
+  label 'fast'
+
   input:
   val(name)
   val(model)
@@ -65,6 +67,8 @@ process RUN_PHYLOSTAN {
 }
 
 process PREPARE_PHYSHER {
+  label 'ultrafast'
+
   publishDir "$params.results/macro/physher", mode: 'copy'
 
   input:
@@ -83,6 +87,8 @@ process PREPARE_PHYSHER {
 }
 
 process RUN_PHYSHER {
+  label 'fast'
+
   publishDir "$params.results/macro/physher", mode: 'copy'
 
   input:
@@ -95,6 +101,7 @@ process RUN_PHYSHER {
 }
 
 process PREPARE_TORCHTREE {
+  label 'ultrafast'
   label 'bito'
 
   publishDir "$params.results/macro/torchtree", mode: 'copy'
@@ -127,6 +134,7 @@ process PREPARE_TORCHTREE {
 }
 
 process RUN_TORCHTREE {
+  label 'fast'
   label 'bito'
 
   errorStrategy 'ignore'
@@ -168,6 +176,7 @@ process RUN_PHYLOJAX {
 }
 
 process RUN_TREEFLOW {
+  label 'fast'
   label 'bito'
 
   publishDir "$params.results/macro/treeflow", mode: 'copy'
@@ -185,6 +194,7 @@ process RUN_TREEFLOW {
 }
 
 process COMBIME_TIME_LOG {
+  label 'ultrafast'
   publishDir "$params.results/macro/", mode: 'copy'
 
   input:

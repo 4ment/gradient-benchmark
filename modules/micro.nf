@@ -5,7 +5,7 @@ nextflow.enable.dsl = 2
 params.replicates = 1000
 params.results = "results"
 
-phylox = Channel.of("torchtree", "bitorch", "phylojax")
+phylox = Channel.of("torchtree", "bitorch")
 
 process RUN_PHYSHER_BENCHMARK {
   label 'fast'
@@ -28,7 +28,7 @@ process RUN_PHYSHER_BENCHMARK {
   """
 }
 
-process RUN_PHYLOX_BENCHMARK {
+process RUN_TORCHTREE_BENCHMARK {
   label 'normal'
   label 'bito'
 
@@ -43,19 +43,39 @@ process RUN_PHYLOX_BENCHMARK {
     extra = " -d float32"
   else
     extra = ""
-  
-  if (phylox != "phylojax")
-    extra += " --gtr"
   """
   ${phylox}-benchmark -i $seq_file \
                       -t $lsd_newick \
                       -r ${params.replicates} \
                       -s 0.001 \
                       -o out.csv \
+                      --gtr \
                       ${extra}
   awk 'NR==1{print "program,size,rep,precision,"\$0}; \
        NR>1{print "$phylox,$size,$rep,${precision},"\$0}' out.csv \
       > ${phylox}.${size}.${rep}.${precision}.csv
+  """
+}
+
+process RUN_PHYLOJAX_BENCHMARK {
+  label 'phylojax'
+  label 'bito'
+
+  publishDir "$params.results/micro/phylojax", mode: 'copy'
+
+  input:
+  tuple val(size), val(rep), path(lsd_newick), path(seq_file)
+  output:
+  path("phylojax.${size}.${rep}.csv")
+  """
+  phylojax-benchmark -i $seq_file \
+                     -t $lsd_newick \
+                     -r ${params.replicates} \
+                     -s 0.001 \
+                     -o out.csv
+  awk 'NR==1{print "program,size,rep,precision,"\$0}; \
+       NR>1{print "phylojax,$size,$rep,64,"\$0}' out.csv \
+      > phylojax.${size}.${rep}.csv
   """
 }
 
@@ -104,15 +124,18 @@ workflow micro {
   main:
   RUN_PHYSHER_BENCHMARK(data)
 
-  RUN_PHYLOX_BENCHMARK(data.combine(phylox).combine(
+  RUN_TORCHTREE_BENCHMARK(data.combine(phylox).combine(
     Channel.of("64")).mix(data.combine(Channel.of(['torchtree', "32"]))))
+  
+  RUN_PHYLOJAX_BENCHMARK(data)
 
   RUN_TREEFLOW_BENCHMARK(data)
 
   ch_files = Channel.empty()
   ch_files = ch_files.mix(
           RUN_PHYSHER_BENCHMARK.out.collect(),
-          RUN_PHYLOX_BENCHMARK.out.collect(),
+          RUN_TORCHTREE_BENCHMARK.out.collect(),
+          RUN_PHYLOJAX_BENCHMARK.out.collect(),
           RUN_TREEFLOW_BENCHMARK.out.collect())
   COMBIME_CSV(ch_files.collect())
 }

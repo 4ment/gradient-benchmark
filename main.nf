@@ -88,7 +88,7 @@ process CREATE_SUB_FILES {
 workflow {
   if (params.reuse) {
     subsets_ch = Channel.of(20, 50, 100, 200, 500, 750, 1000, 1250, 1500, 2000)
-    replicates_ch = Channel.of(0..5)
+    replicates_ch = Channel.of(0..10)
     ch = subsets_ch.combine(replicates_ch)
     tt_ch = ch.map {
       tuple(it[0], it[1],
