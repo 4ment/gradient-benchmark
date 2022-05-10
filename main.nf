@@ -63,11 +63,7 @@ def group_per_size_rep(newick_ch, create_sub_ch) {
 }
 
 process CREATE_SUB_FILES {
-<<<<<<< HEAD
-  label 'auto_diff_exp'
-=======
   label 'ultrafast'
->>>>>>> e0ff048ee625d93c88fb6d3a6bc0e652f63beb69
 
   input:
   tuple val(size), val(rep), path(lsd_dates), path(newick_file)
@@ -114,7 +110,7 @@ workflow {
           CONVERT_LSD_NEXUS_TO_NEWICK.out,
           CREATE_SUB_FILES.out)
 
-  // macro_flu(data)
+  macro_flu(data)
 
   micro(data.map { it.take(4) })
 }

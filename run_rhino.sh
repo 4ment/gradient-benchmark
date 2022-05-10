@@ -8,8 +8,9 @@ module load Singularity
 export PATH=$SINGULARITYROOT/bin/:$PATH
 
 /usr/bin/time nextflow  \
-    -C ./nextflow.rhino.config \
+    -C ./configs/rhino.config \
     run main.nf \
+    -profile rhino \
     -with-report ./r_output/nextflow_report.html \
     -work-dir ./r_output/work/ \
     -resume
