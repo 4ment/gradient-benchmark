@@ -45,7 +45,7 @@ def create_sub_files(
 
 
 def prepare_physher(
-    subfasta_file, subtree_file, dates_file, json_template_file, json_file, iterations
+    subfasta_file, subtree_file, dates_file, json_template_file, json_file, iterations, rate
 ):
     dates = read_dates(dates_file)
     with open(json_template_file, "r") as fp:
@@ -60,6 +60,7 @@ def prepare_physher(
         .replace("TREE_TEMPLATE", subtree_file)
         .replace("DIM_TEMPLATE", str(len(dates) - 1))
         .replace("TEMPLATE_ITER", iterations)
+        .replace("RATE_TEMPLATE", rate)
     )
     with open(json_file, "w") as fp:
         fp.write(content)
