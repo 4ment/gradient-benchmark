@@ -22,15 +22,7 @@ RUN apt-get update && \
 	&& apt-get clean \
 	&& rm -rf /var/lib/apt/lists/*
 
-RUN git clone https://github.com/beagle-dev/beagle-lib.git
-WORKDIR beagle-lib
-RUN git checkout 3dade2bf55f221a837019c2d80b309291c708704
-RUN ./autogen.sh && ./configure && make install
-
-ENV BEAGLE_PREFIX /usr/local
-ENV LD_LIBRARY_PATH /usr/local/lib
-
-RUN git clone --depth 1 --branch=autodiff-experiments https://github.com/4ment/bito /bito
+RUN git clone --depth 1 https://github.com/phylovi/bito /bito
 WORKDIR /bito
 RUN git submodule update --init --recursive
 RUN conda env create -f environment.yml
@@ -76,6 +68,10 @@ RUN ln -s /phylojax/benchmarks/benchmark.py /usr/local/bin/phylojax-benchmark \
 
 RUN git clone --depth 1 https://github.com/4ment/phylostan /phylostan
 RUN cd /phylostan && pip install . && phylostan --help
+
+RUN git clone --depth 1 https://github.com/christiaanjs/treeflow.git /treeflow
+RUN cd /treeflow && /opt/conda/envs/bito/bin/pip install . 
+RUN . /opt/conda/etc/profile.d/conda.sh && conda activate bito && treeflow_benchmark --help
 
 RUN echo "source activate bito" > ~/.bashrc
 ENV PATH /opt/conda/envs/bito/bin:$PATH

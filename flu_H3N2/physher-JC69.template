@@ -6,7 +6,7 @@
 		{
 			"id":"treelikelihood",
 			"type": "treelikelihood",
-			"reparameterized": true,
+			"include_jacobian": true,
 			"sse":true,
 			"tipstates": false,
 			"sitepattern":{
@@ -52,7 +52,7 @@
 				"type": "branchmodel",
 				"model": "strict",
 				"tree": "&tree",
-				"rate":	{"id":"rate", "type":"parameter", "value":0.001, "lower":0}
+				"rate":	{"id":"rate", "type":"parameter", "value": RATE_TEMPLATE, "lower":0}
 			}
 		},
 		{
@@ -99,6 +99,7 @@
 			"type": "block",
 			"distribution": "normal",
 			"x": "%tree.scalers",
+			"initialize": true,
 			"parameters":{
 				"mu": {"id":"mu", "type":"parameter",  "values": [0.5], "dimension": DIM_TEMPLATE},
 				"sigma": {"id":"sigma", "type":"parameter", "values":[0.15], "lower": 0, "dimension": DIM_TEMPLATE}
@@ -119,6 +120,7 @@
 			"type": "block",
 			"distribution": "normal",
 			"x": "&rate",
+			"initialize": true,
 			"parameters":{
 				"mu": {"id":"mu.rate", "type":"parameter",  "value": -5.6},
 				"sigma": {"id":"sigma.rate", "type":"parameter", "value":0.07, "lower": 0}
@@ -132,7 +134,7 @@
 		"algorithm":"sg",
 		"type":"optimizer",
 		"tol": 0.0000001,
-		"eta": 0.01,
+		"eta": 0.0001,
 		"_model": "&var",
 		"model": "&varnormal",
 		"parameters": ["%mu", "%sigma", "&mu.rate", "&sigma.rate","&mu.theta", "&sigma.theta"],

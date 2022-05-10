@@ -20,6 +20,14 @@ the gradient using the [BEAGLE] library. BITO is only available in treeflow and 
 You will need to install [nextflow](https://www.nextflow.io) and [docker](https://www.docker.com) to run this benchmark.
 Docker is not required but it is highly recommended to use it due to the numerous dependencies.
 
+## Installation
+
+    git clone 4ment/autodiff-experiments.git
+
+### Initialize treetime_validation
+
+    git submodule update --init --recursive
+
 ## Running the pipeline with docker
 
     nextflow run 4ment/autodiff-experiments -profile docker

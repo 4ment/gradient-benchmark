@@ -1,0 +1,350 @@
+---
+title: "autodiff"
+author: "Mathieu"
+date: '`r format(Sys.time(), "%d %B, %Y")`'
+output:
+  pdf_document:
+    toc: true
+    toc_depth: 3
+
+---
+
+```{r setup, include=FALSE}
+library(ggplot2)
+library(dplyr)
+library(knitr)
+library(stringr)
+knitr::opts_chunk$set(echo = TRUE)
+options(dplyr.summarise.inform = FALSE)
+knitr::opts_chunk$set(fig.path='Figs/')
+```
+
+# Benchmark description
+
+## Macro benchmark
+
+- flu dataset from treetime_validation
+- 5000 iterations
+- model:
+  - JC69
+  - time tree
+  - constant population size
+  - exp(1000) prior on strict clock
+  - OneOnX prior on population size
+
+## Micro benchmark
+
+- flu dataset from treetime_validation
+- 1000 replicates
+- treelikelihood:
+  - input: branch lengths
+  - output: log likleihood
+  - derivatives wrt branch lengths
+- coalescent:
+  - input: node heights and pop size
+  - output: log likelihood
+  - derivatives wrt constant pop size and node heights (not ratios)
+- ratio_transform:
+  - input: ratios/root height
+  - output: internal node heights
+  - derivatives wrt ratios
+- ratio_transform_jacobian:
+  - input: internal node heights
+  - output: log determinant of the Jacobian
+  - derivatives wrt internal node heights
+
+Programs:
+
+- torchtree: pure pytorch
+- bitorch: torchtree with BITO (analytic derivatives of tree likelihood calculated with BEAGLE)
+- torchtree32: torchtree with single precision
+- phylojax: pure JAX
+- treeflow: pure treeflow
+- physher: pure C (analytic derivatives)
+- phylostan: Stan language
+
+\newpage
+# Results
+## Macro benchmark
+
+### Runtime against dataset size
+```{r include=FALSE}
+df.macro.raw = read.csv("resultsd/macro/macro.csv", sep = ',')
+max_iter = 5000 # number of iterations in the benchmark
+```
+
+```{r}
+df.macro = df.macro.raw %>%
+  filter(iters == max_iter | program == 'treeflow') %>%
+  group_by(program, size) %>% summarize(time = min(time)) %>% ungroup()
+
+ggplot(df.macro, aes(x = size,
+                     y = time,
+                     color = program)) +
+  geom_line() +
+  geom_point() +
+  xlab("Number of sequences") +
+  ylab("Time in seconds")
+```
+
+\newpage
+### Runtime against dataset size without phylojax
+```{r}
+df.macro = df.macro.raw %>%
+  filter(iters == max_iter | program == 'treeflow') %>%
+  filter(program != 'phylojax') %>%
+  group_by(program, size) %>% summarize(time = min(time)) %>% ungroup()
+
+ggplot(df.macro, aes(x = size,
+                     y = time,
+                     color = program)) +
+  geom_line() +
+  geom_point() +
+  xlab("Number of sequences") +
+  ylab("Time in seconds")
+```
+
+### Runtime against dataset size up to 500 sequences
+```{r}
+df.macro = df.macro.raw %>%
+  filter(iters == max_iter | program == 'treeflow') %>%
+  filter(size <= 500) %>%
+  filter(program != 'phylojax') %>%
+  group_by(program, size) %>% summarize(time = min(time)) %>% ungroup()
+
+ggplot(df.macro, aes(x = size,
+                     y = time,
+                     color = program)) +
+  geom_line() +
+  geom_point() +
+  xlab("Number of sequences") +
+  ylab("Time in seconds")
+```
+
+
+\newpage
+```{r include=FALSE}
+df.micro = read.csv("resultsd/micro/micro.csv", sep = ',')
+
+df.micro[df.micro$program == 'treeflow' &
+           df.micro$function. == 'constant_coalescent', ]$function. = 'coalescent'
+
+df.micro$function.[df.micro$function. == 'treelikelihoodJC69'] = 'treelikelihood'
+
+# Use the minimum time out of the x replicates
+df.micro = df.micro %>% group_by(program, size, precision, function., mode, JIT) %>%
+  summarize(time = min(time)) %>% ungroup()
+
+df.micro[df.micro$precision == 32,]$program = 'torchtree32'
+
+df.micro = df.micro %>% filter(function. != 'ratio_transform_jacobian2' &
+                                 function. != 'ratio_transform2')
+
+df.micro = df.micro %>%
+  mutate(program = ifelse(
+    function. == 'treelikelihoodAnalytic',
+    'jax-analytic',
+    program
+  ))  %>%
+  mutate(function. = ifelse(
+    function. == 'treelikelihoodAnalytic',
+    'treelikelihood',
+    function.
+  ))
+df.micro = df.micro %>% filter(program != 'jax-analytic')
+
+# add first and other evaluation times
+df.micro.jax = df.micro %>% filter(program == 'phylojax')
+df.micro.jax.1 = df.micro.jax %>% filter(grepl('1', mode)) %>%
+  mutate(mode = str_sub(mode, 1, nchar(mode) - 1))
+df.micro.jax.rest = df.micro.jax %>% filter(!grepl('1', mode))
+df.micro.jax.all = df.micro.jax.1 %>%
+  full_join(df.micro.jax.rest,
+            by = c("program", "size", "precision", "function.", "JIT", "mode")) %>%
+  mutate(time.x = time.x + time.y) %>%
+  rename(time = time.x) %>% select(!time.y)
+
+df.micro = rbind(
+  df.micro %>% filter(program != 'phylojax'),
+  df.micro.jax.all,
+  df.micro.jax.1 %>% mutate(program = 'phylojax1')
+)
+```
+
+\newpage
+
+## Micro benchmark
+### Log likelihood evalutation
+```{r}
+micro.like = df.micro %>% filter(mode == 'evaluation')
+
+ggplot(micro.like, aes(
+  x = size,
+  y = time,
+  color = program,
+  linetype = JIT
+)) +
+  geom_line() +
+  geom_point() +
+  facet_wrap( ~ function., scales = "free", nrow = 2) +
+  xlab("Number of sequences") +
+  ylab("Time in seconds")
+```
+
+\newpage
+
+### Gradient evaluation
+```{r}
+micro.grad = df.micro %>% filter(mode == 'gradient')
+
+
+ggplot(micro.grad, aes(
+  x = size,
+  y = time,
+  color = program,
+  linetype = JIT
+)) +
+  geom_line() +
+  geom_point() +
+  facet_wrap( ~ function., scales = "free", nrow = 2) +
+  xlab("Number of sequences") +
+  ylab("Time in seconds")
+```
+
+\newpage
+
+### Log likelihood evaluation wihtout phylojax
+```{r}
+micro.grad = df.micro %>% filter(mode == 'evaluation') %>%
+  filter(!grepl('phylojax', program))
+
+ggplot(micro.grad, aes(
+  x = size,
+  y = time,
+  color = program,
+  linetype = JIT
+)) +
+  geom_line() +
+  geom_point() +
+  facet_wrap( ~ function., scales = "free", nrow = 2) +
+  xlab("Number of sequences") +
+  ylab("Time in seconds")
+```
+
+\newpage
+
+### Gradient evaluation wihtout phylojax
+```{r}
+micro.grad = df.micro %>% filter(mode == 'gradient') %>%
+  filter(!grepl('phylojax', program))
+
+ggplot(micro.grad, aes(
+  x = size,
+  y = time,
+  color = program,
+  linetype = JIT
+)) +
+  geom_line() +
+  geom_point() +
+  facet_wrap( ~ function., scales = "free", nrow = 2) +
+  xlab("Number of sequences") +
+  ylab("Time in seconds")
+```
+
+\newpage
+
+### Gradient evaluation log scale
+```{r}
+dd = df.micro %>% filter(mode == 'gradient') %>% filter(program != 'phylojax')
+ggplot(dd, aes(
+  x = size,
+  y = time,
+  color = program,
+  linetype = JIT
+)) +
+  geom_point() +
+  stat_smooth(formula = y ~ x,
+              method = "lm",
+              se = FALSE) +
+  scale_x_continuous(trans = 'log2') +
+  scale_y_continuous(trans = 'log2') +
+  facet_wrap( ~ function., scales = "free", nrow = 2)
+```
+
+\newpage
+
+```{r}
+fit_log_log <- function(df, m) {
+  fits = df %>% filter(mode == m) %>%
+    mutate(size = log(size), time = log(time)) %>%
+    group_by(program, JIT, function., mode) %>%
+    do(model = lm(time ~ size, data = .)) %>% ungroup()
+  
+  fits$intercept = sapply(fits$model, function(x)
+    x$coefficients[[1]])
+  fits$slope = sapply(fits$model, function(x)
+    x$coefficients[[2]])
+  fits = fits %>% select(!model)
+  fits
+}
+```
+
+\newpage
+
+### Log likelihood evaluation log scale
+```{r}
+dd.log = fit_log_log(df.micro, 'evaluation')
+
+kable(dd.log %>% arrange(function., slope))
+```
+
+\newpage
+
+### Gradient evaluation log scale
+```{r}
+dd.log.grad = fit_log_log(df.micro, 'gradient')
+
+kable(dd.log.grad %>% arrange(function., slope))
+```
+
+\newpage
+
+### Only bitorch and physher
+```{r}
+dd = df.micro %>%  filter(program %in% c('physher', 'bitorch')) %>%
+  filter(function. != 'coalescent')
+
+ggplot(dd, aes(
+  x = size,
+  y = time,
+  color = program,
+  linetype = mode
+)) +
+  geom_line() +
+  geom_point() +
+  facet_wrap( ~ function., scales = "free") +
+  xlab("Number of sequences") +
+  ylab("Time in seconds")
+```
+
+\newpage
+
+### Ratio of gradient and likelihood execution time
+```{r}
+micro.join = micro.like %>%
+  full_join(micro.grad,
+            by = c("program", "size", "precision", "function.", "JIT")) %>%
+  mutate(ratio = time.y / time.x) %>% filter(!grepl('phylojax', program))
+
+ggplot(micro.join, aes(
+  x = size,
+  y = ratio,
+  color = program,
+  linetype = JIT
+)) +
+  geom_line() +
+  geom_point() +
+  facet_wrap( ~ function., scales = "free") +
+  xlab("Number of sequences") +
+  ylab("Ratio gradient/evaluation execution times")
+```
