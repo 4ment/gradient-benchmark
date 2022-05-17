@@ -10,6 +10,7 @@ export PATH=$SINGULARITYROOT/bin/:$PATH
 /usr/bin/time nextflow  \
     -C ./configs/rhino.config \
     run main.nf \
+    --results "$(date -I)-rhino-results" \
     -profile rhino \
     -with-report ./r_output/nextflow_report.html \
     -work-dir ./r_output/work/ \
