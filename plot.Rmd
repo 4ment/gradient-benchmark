@@ -69,7 +69,7 @@ Programs:
 
 ### Runtime against dataset size
 ```{r include=FALSE}
-df.macro.raw = read.csv("resultsd/macro/macro.csv", sep = ',')
+df.macro.raw = read.csv("results/macro/macro.csv", sep = ',')
 max_iter = 5000 # number of iterations in the benchmark
 ```
 
@@ -124,7 +124,7 @@ ggplot(df.macro, aes(x = size,
 
 \newpage
 ```{r include=FALSE}
-df.micro = read.csv("resultsd/micro/micro.csv", sep = ',')
+df.micro = read.csv("results/micro/micro.csv", sep = ',')
 
 df.micro[df.micro$program == 'treeflow' &
            df.micro$function. == 'constant_coalescent', ]$function. = 'coalescent'

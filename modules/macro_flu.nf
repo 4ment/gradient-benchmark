@@ -124,7 +124,7 @@ process PREPARE_TORCHTREE {
                 --heights_init tree \
                 --rate_init ${clock_rate} \
                 --clockpr exponential \
-                --eta 0.0001 \
+                --lr 0.0001 \
                 --elbo_samples 1 \
                 --tol_rel_obj 0 \
                 --iter ${params.iterations} \
