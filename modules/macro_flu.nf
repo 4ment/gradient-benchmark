@@ -91,7 +91,6 @@ process RUN_PHYSHER {
 
   publishDir "$params.results/macro/physher", mode: 'copy'
 
-
   input:
   tuple val(size), val(rep), path(lsd_newick), path(seq_file), path(physher_json)
   output:
