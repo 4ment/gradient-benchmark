@@ -62,6 +62,8 @@ process RUN_PHYLOSTAN {
                 --eta 0.0001 \
                 --tol_rel_obj 0.00000001 \
                 --elbo_samples 1 \
+                --heights_init \
+                --rate ${clock_rate} \
                 --samples 1 > phylostan.${size}.${rep}.txt ; } 2> phylostan.${size}.${rep}.log
   """
 }

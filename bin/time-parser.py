@@ -44,18 +44,32 @@ for file_path in sys.argv[2:]:
                     a.append(str(time_sec))
                     times[name] = a
     else:
-        if a[0] == "torchtree":
-            pattern_elbo = re.compile(r"\s+(\d+)\s+(-\d+\.\d+).+")
-        elif a[0] == "phylostan":
-            #    100       -23766.035             1.000            1.000
-            pattern_elbo = re.compile(r"\s+(\d+)\s+(-\d+\.\d+).+")
-        elif a[0] == "physher":
-            pattern_elbo = re.compile(r"(\d+)\s+ELBO:\s+(-\d+\.\d+).+")
-        elif a[0] == "phylojax":
-            pattern_elbo = re.compile(r"(\d+)\s+ELBO\s+(-\d+\.\d+).+")
+        if a[0] == "treeflow":
+            iters, elbo = 0, "nan"
+            pattern_elbo = re.compile(".+ELBO estimate: (-\d+\.\d+).+")
+            pattern_iter = re.compile(".+Ran inference for (\d+) iterations.*")
+            with open(file_path.replace("log", "txt"), "r") as fp:
+                content = fp.read()
+                mt = pattern_elbo.match(line)
+                if mt:
+                    elbo = mt.groups()
+                mt = pattern_iter.match(line)
+                if mt:
+                    iters = mt.groups()
         else:
-            pattern_elbo = re.compile("sdfasdf")
-        iters, elbo = parse(file_path.replace("log", "txt"), pattern_elbo)
+            if a[0] == "torchtree":
+                pattern_elbo = re.compile(r"\s+(\d+)\s+(-\d+\.\d+).+")
+            elif a[0] == "phylostan":
+                #    100       -23766.035             1.000            1.000
+                pattern_elbo = re.compile(r"\s+(\d+)\s+(-\d+\.\d+).+")
+            elif a[0] == "physher":
+                pattern_elbo = re.compile(r"(\d+)\s+ELBO:\s+(-\d+\.\d+).+")
+            elif a[0] == "phylojax":
+                pattern_elbo = re.compile(r"(\d+)\s+ELBO\s+(-\d+\.\d+).+")
+            else:
+                sys.stderr.write(f"The name of the program is not recognized: {a[0]}")
+                exit(1)
+            iters, elbo = parse(file_path.replace("log", "txt"), pattern_elbo)
         elbos[name] = [iters, elbo]
 
 with open(sys.argv[1], "w") as csv_file:
