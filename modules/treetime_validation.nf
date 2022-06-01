@@ -32,6 +32,7 @@ process TREETIME_VALIDATION_SUBTREES {
           path("dataset/subtrees/H3N2_HA_2011_2013_${size}_${rep}.nwk")
   tuple path("treetime_res.${size}.${rep}.csv"),
           path("lsd_res.${size}.${rep}.csv")
+  path("dataset/treetime_out/H3N2_HA_2011_2013_${size}_${rep}.tree")
   path("beast_res.${size}.${rep}.csv") optional true
   script:
   if(params.enable_beast)
