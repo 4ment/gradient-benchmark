@@ -28,6 +28,7 @@ process COMPILE_PHYLOSTAN {
                   --heterochronous \
                   --estimate_rate \
                   --clock strict \
+                  --clockpr exponential \
                   -c constant \
                   --compile
   """
@@ -78,13 +79,15 @@ process PREPARE_PHYSHER {
   output:
   tuple val(size), val(rep), path("physher.${size}.${rep}.json")
   """
-  helper.py 1 \
-                                    $seq_file \
-                                    $lsd_newick \
-                                    ${lsd_dates} \
-                                    $physher_jc69_template physher.${size}.${rep}.json \
-                                    ${params.iterations} \
-                                    ${clock_rate}
+  helper.py physher --input $seq_file \
+                    --tree $lsd_newick \
+                    --dates ${lsd_dates} \
+                    --template $physher_jc69_template \
+                    --output physher.${size}.${rep}.json \
+                    --iterations ${params.iterations} \
+                    --rate ${clock_rate} \
+                    --lr 0.0001 \
+                    --tol 0.0000001
   """
 }
 

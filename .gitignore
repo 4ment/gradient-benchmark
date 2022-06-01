@@ -4,3 +4,5 @@ work
 .DS_Store
 autodiff-experiments.iml
 .Rproj.user
+.RData
+.Rhistory
