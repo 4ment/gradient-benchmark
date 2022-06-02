@@ -62,7 +62,41 @@ def subfiles(
 @click.option("--rate", type=float, required=True, help="substitution rate")
 @click.option("--lr", type=float, required=True, help="learning rate")
 @click.option("--tol", type=float, required=True, help="tolerance")
-def physher(input, tree, dates, template, output, iterations, rate, lr, tol):
+@click.option(
+    "--ctmcscale",
+    is_flag=True,
+    show_default=True,
+    default=False,
+    help="use CTMCScale prior",
+)
+@click.option(
+    "--samples", type=int, required=False, default=0, help="number of samples"
+)
+@click.option(
+    "--elbo_samples",
+    type=int,
+    required=False,
+    default=1,
+    help="number of samples for ELBO",
+)
+@click.option(
+    "--stem", type=click.UNPROCESSED, required=False, help="stem for output files"
+)
+def physher(
+    input,
+    tree,
+    dates,
+    template,
+    output,
+    iterations,
+    rate,
+    lr,
+    tol,
+    ctmcscale,
+    samples,
+    elbo_samples,
+    stem,
+):
     dates = read_dates(dates)
     with open(template, "r") as fp:
         content = fp.read()
@@ -70,6 +104,30 @@ def physher(input, tree, dates, template, output, iterations, rate, lr, tol):
         ['"{}":{}'.format(taxon, date) for taxon, date in dates.items()]
     )
     dates_json = dates_json.rstrip(",\n")
+
+    if ctmcscale:
+        clock_prior = """
+				{
+					"id":"priorrate",
+					"type": "distribution",
+					"distribution": "ctmcscale",
+					"x": "&rate",
+					"tree": "&tree"
+				}
+        """
+    else:
+        clock_prior = """
+				{
+					"id":"priorrate",
+					"type": "distribution",
+					"distribution": "exponential",
+					"x": "&rate",
+					"parameters":{
+						"lambda":{"id":"lambda.rate", "type":"parameter", "value":1000}
+					}
+				}
+        """
+
     content = (
         content.replace("FILE_TEMPLATE", input)
         .replace("DATES_TEMPLATE", dates_json)
@@ -79,7 +137,18 @@ def physher(input, tree, dates, template, output, iterations, rate, lr, tol):
         .replace("RATE_TEMPLATE", str(rate))
         .replace("LR_TEMPLATE", str(lr))
         .replace("TOL_TEMPLATE", str(tol))
+        .replace("ELBO_SAMPLES_TEMPLATE", str(elbo_samples))
+        .replace("RATE_PRIOR_TEMPLATE", clock_prior)
     )
+
+    if samples == 0:
+        content = content.replace("POST_OPIMIZATION_TEMPLATE", "")
+
+    if stem:
+        content = content.replace("CHECKPOINT_TEMPLATE", f"{stem}.-checkpoint.csv")
+    else:
+        content = content.replace("CHECKPOINT_TEMPLATE", "checkpoint.csv")
+
     with open(output, "w") as fp:
         fp.write(content)
 

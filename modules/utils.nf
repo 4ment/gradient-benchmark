@@ -32,7 +32,7 @@ process CREATE_SUB_FILES {
   label 'ultrafast'
 
   input:
-    tuple val(size), val(rep), path(lsd_dates), path(newick_file)
+    tuple val(size), val(rep), path(lsd_dates), path(newick_file), path(fasta_file)
   output:
     tuple val(size), val(rep),
           path("H3N2_HA_2011_2013_${size}_${rep}.new.nwk"),
@@ -40,7 +40,7 @@ process CREATE_SUB_FILES {
           path("H3N2_HA_2011_2013_${size}_${rep}.lsd_dates.new.txt")
   """
   helper.py subfiles \
-            --input $subtrees_alignment \
+            --input $fasta_file \
             --dates $lsd_dates \
             --tree $newick_file \
             --out_tree H3N2_HA_2011_2013_${size}_${rep}.new.nwk \

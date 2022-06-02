@@ -74,15 +74,7 @@
 					"distribution": "oneonx",
 					"x": "&n0"
 				},
-				{
-					"id":"priorrate",
-					"type": "distribution",
-					"distribution": "exponential",
-					"x": "&rate",
-					"parameters":{
-						"lambda":{"id":"lambda.rate", "type":"parameter", "value":1000}
-					}
-				}
+RATE_PRIOR_TEMPLATE
 			]
 		}
 	]
@@ -91,7 +83,7 @@
 	"id":"varnormal",
 	"type": "variational",
 	"posterior": "&posterior",
-	"elbosamples": 1,
+	"elbosamples": ELBO_SAMPLES_TEMPLATE,
 	"gradsamples": 1,
 	"distributions":[
 		{
@@ -135,17 +127,11 @@
 		"type":"optimizer",
 		"tol": TOL_TEMPLATE,
 		"eta": LR_TEMPLATE,
-		"_model": "&var",
 		"model": "&varnormal",
+		"checkpoint": "CHECKPOINT_TEMPLATE",
 		"parameters": ["%mu", "%sigma", "&mu.rate", "&sigma.rate","&mu.theta", "&sigma.theta"],
 		"max": TEMPLATE_ITER
 	}
-	,
-	{
-	"ignore":true,
-		"id": "loo",
-		"type": "logger",
-		"parameters": ["%mu", "%sigma", "&mu.rate", "&sigma.rate","&mu.theta", "&sigma.theta"]
-	}
+POST_OPIMIZATION_TEMPLATE
 ]
 }

@@ -19,22 +19,23 @@ process RUN_LSD {
   label 'ultrafast'
 
   input:
-  tuple val(size),
+    tuple val(size),
           val(rep),
           path(subtree_dates_file),
           path(fasta),
           path(new_dates_file)
   output:
-  tuple val(size), val(rep), path("lsd.out.date.nexus")
-  path "lsd.out.nwk", emit: lsd_tree_newick // branch=subst
-  path "lsd.out"
+    tuple val(size), val(rep), path("lsd.${size}.${rep}.out.date.nexus"), env(RATE)
+    path "lsd.${size}.${rep}.out.nwk", emit: lsd_tree_newick // branch=subst
+    path "lsd.${size}.${rep}.out"
 
   """
   lsd2 -i ${subtree_dates_file} \
        -d ${new_dates_file} \
-       -o lsd.out \
+       -o lsd.${size}.${rep}.out \
        -s 1701 \
        -l -1
+  RATE=\$(grep "^ rate" lsd.${size}.${rep}.out|awk '{print \$2}'|sed "s/,//")
   """
 }
 
@@ -65,7 +66,7 @@ workflow {
     tt_ch = treetime_validation.out
   }
 
-  CREATE_SUB_FILES(tt_ch)
+  CREATE_SUB_FILES(tt_ch.combine(Channel.of("$subtrees_alignment")))
 
   RUN_LSD(CREATE_SUB_FILES.out)
 
@@ -77,5 +78,5 @@ workflow {
 
   macro_flu(data)
 
-  micro(data.map { it.take(4) })
+  micro(data.map { tuple(it[0], it[1], it[2], it[4]) })
 }

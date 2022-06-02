@@ -46,16 +46,16 @@ for file_path in sys.argv[2:]:
     else:
         if a[0] == "treeflow":
             iters, elbo = 0, "nan"
-            pattern_elbo = re.compile(".+ELBO estimate: (-\d+\.\d+).+")
-            pattern_iter = re.compile(".+Ran inference for (\d+) iterations.*")
             with open(file_path.replace("log", "txt"), "r") as fp:
                 content = fp.read()
-                mt = pattern_elbo.match(line)
+                mt = re.search(r"ELBO estimate: (-\d+\.\d+)", content, re.MULTILINE)
                 if mt:
-                    elbo = mt.groups()
-                mt = pattern_iter.match(line)
+                    elbo = mt.group(1)
+                mt = re.search(
+                    r"Ran inference for (\d+) iterations", content, re.MULTILINE
+                )
                 if mt:
-                    iters = mt.groups()
+                    iters = mt.group(1)
         else:
             if a[0] == "torchtree":
                 pattern_elbo = re.compile(r"\s+(\d+)\s+(-\d+\.\d+).+")

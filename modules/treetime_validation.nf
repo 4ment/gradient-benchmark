@@ -4,13 +4,6 @@ nextflow.enable.dsl = 2
 
 params.subtrees = Channel.of(20, 50, 100, 200, 500, 750, 1000, 1250, 1500, 2000)
 params.subtrees_replicates = Channel.of(0..9)
-
-if(params.enable_beast){
-  beast_res = "--beast_file beast_res.csv"
-}else{
-  beast_res = ""
-}
-
 params.base = "$baseDir"
 
 alignment_file = "$params.base/resources/flu_H3N2/H3N2_HA_2011_2013.fasta"
@@ -32,7 +25,14 @@ process TREETIME_VALIDATION_SUBTREES {
           path("dataset/subtrees/H3N2_HA_2011_2013_${size}_${rep}.nwk")
   tuple path("treetime_res.${size}.${rep}.csv"),
           path("lsd_res.${size}.${rep}.csv")
+  tuple path("dataset/LSD_out/H3N2_HA_2011_2013_${size}_${rep}.txt"),
+        path("dataset/LSD_out/H3N2_HA_2011_2013_${size}_${rep}.txt.date.newick"),
+        path("dataset/LSD_out/H3N2_HA_2011_2013_${size}_${rep}.txt.newick"),
+        path("dataset/LSD_out/H3N2_HA_2011_2013_${size}_${rep}.txt.nexus")
   path("dataset/treetime_out/H3N2_HA_2011_2013_${size}_${rep}.tree")
+  tuple path("dataset/beast_out/H3N2_HA_2011_2013_${size}_${rep}.config.xml"),
+        path("dataset/beast_out/H3N2_HA_2011_2013_${size}_${rep}.log.txt"),
+        path("dataset/beast_out/H3N2_HA_2011_2013_${size}_${rep}.trees.txt") optional true
   path("beast_res.${size}.${rep}.csv") optional true
   script:
   if(params.enable_beast)
