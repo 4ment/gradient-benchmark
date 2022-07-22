@@ -66,8 +66,7 @@ RUN cd /phylojax && /opt/conda/envs/bito/bin/pip install jax==0.2.24 jaxlib . &&
 RUN ln -s /phylojax/benchmarks/benchmark.py /usr/local/bin/phylojax-benchmark \
     && chmod +x /usr/local/bin/phylojax-benchmark
 
-RUN git clone --depth 1 https://github.com/4ment/phylostan /phylostan
-RUN cd /phylostan && pip install . && phylostan --help
+RUN pip install phylostan==1.0.5 && phylostan --help
 
 RUN git clone --depth 1 https://github.com/christiaanjs/treeflow.git /treeflow
 RUN cd /treeflow && /opt/conda/envs/bito/bin/pip install . 

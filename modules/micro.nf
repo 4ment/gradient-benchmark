@@ -94,6 +94,8 @@ process RUN_TREEFLOW_BENCHMARK {
                       -t $lsd_newick \
                       -r ${params.replicates} \
                       -s 0.001 \
+                      --gtr \
+                      -p false \
                       -o out.csv
   awk 'NR==1{print "program,size,rep,precision,"\$0}; \
        NR>1{print "treeflow,$size,$rep,64,"\$0}' out.csv \

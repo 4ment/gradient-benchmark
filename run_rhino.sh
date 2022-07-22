@@ -14,4 +14,5 @@ export PATH=$SINGULARITYROOT/bin/:$PATH
     -profile rhino \
     -with-report ./r_output/nextflow_report.html \
     -work-dir ./r_output/work/ \
+    -with-trace \
     -resume

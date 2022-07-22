@@ -128,6 +128,7 @@ RATE_PRIOR_TEMPLATE
 		"tol": TOL_TEMPLATE,
 		"eta": LR_TEMPLATE,
 		"model": "&varnormal",
+		"update": "adam",
 		"checkpoint": "CHECKPOINT_TEMPLATE",
 		"parameters": ["%mu", "%sigma", "&mu.rate", "&sigma.rate","&mu.theta", "&sigma.theta"],
 		"max": TEMPLATE_ITER
