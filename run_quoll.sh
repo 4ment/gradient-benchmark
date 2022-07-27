@@ -12,7 +12,6 @@ export PATH=$SINGULARITYROOT/bin/:$PATH
     run main.nf \
     --results "$(date -I)-quoll-results" \
     -profile standard \
-    -with-report ./q_output/nextflow_report.html \
-    -with-trace ./q_output/trace.txt \
-    -work-dir ./q_output/work/ \
-    -resume
+    -with-report "$(date -I)-quoll-results"/nextflow_report.html \
+    -with-trace  "$(date -I)-quoll-results"/trace.txt \
+    -work-dir ./q_work/
