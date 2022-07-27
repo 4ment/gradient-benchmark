@@ -119,6 +119,9 @@ process COMBIME_CSV {
   tail -q -n+2 *[0-9].csv >> micro.csv
   """
 }
+//head -n1 ${files[0]} > micro
+//tail -q -n+2 *.csv >> micro
+//mv micro micro.csv
 
 workflow micro {
   take:

@@ -76,7 +76,7 @@ workflow {
           CONVERT_LSD_NEXUS_TO_NEWICK.out,
           CREATE_SUB_FILES.out)
 
-  macro_flu(data)
+  // macro_flu(data)
 
   micro(data.map { tuple(it[0], it[1], it[2], it[4]) })
 }
