@@ -161,6 +161,9 @@ process RUN_PHYLOJAX {
 
   errorStrategy 'ignore'
 
+  when:
+    size <= 750
+
   publishDir "$params.results/macro/phylojax", mode: 'copy'
 
   input:
