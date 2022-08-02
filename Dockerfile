@@ -62,7 +62,7 @@ RUN ln -s /bitorch/benchmarks/benchmark.py /usr/local/bin/bitorch-benchmark \
 RUN . /opt/conda/etc/profile.d/conda.sh && conda activate bito && /usr/local/bin/bitorch-benchmark --help
 
 RUN git clone --depth 1 https://github.com/4ment/phylojax /phylojax
-RUN cd /phylojax && /opt/conda/envs/bito/bin/pip install jax==0.2.24 jaxlib . && /opt/conda/envs/bito/bin/phylojax --help
+RUN cd /phylojax && /opt/conda/envs/bito/bin/pip install jax==0.2.24 jaxlib==0.3.7 numpy==1.22 . && /opt/conda/envs/bito/bin/phylojax --help
 RUN ln -s /phylojax/benchmarks/benchmark.py /usr/local/bin/phylojax-benchmark \
     && chmod +x /usr/local/bin/phylojax-benchmark
 
