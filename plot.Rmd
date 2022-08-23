@@ -14,6 +14,11 @@ library(ggplot2)
 library(dplyr)
 library(knitr)
 library(stringr)
+library(tidyr)
+library(scales)
+library(grid)
+library(gtable)
+library(cowplot)
 knitr::opts_chunk$set(echo = TRUE)
 options(dplyr.summarise.inform = FALSE)
 knitr::opts_chunk$set(fig.path='Figs/')
@@ -57,7 +62,7 @@ Programs:
 
 - torchtree: pure pytorch
 - bitorch: torchtree with BITO (analytic derivatives of tree likelihood calculated with BEAGLE)
-- torchtree32: torchtree with single precision
+- torchtree SP: torchtree with single precision
 - phylojax: pure JAX
 - treeflow: pure treeflow
 - physher: pure C (analytic derivatives)
@@ -65,15 +70,128 @@ Programs:
 
 \newpage
 # Results
+
+```{r include=FALSE}
+programs = c(
+  "physher",
+  "phylostan",
+  "torchtree",
+  "phylojax",
+  "torchtree/BITO",
+  "treeflow",
+  "torchtree SP",
+  "jax-analytic",
+  "phylojax1"
+)
+#colors = palette.colors(NULL, "Okabe-Ito")
+colors = hue_pal()(length(programs))
+progColors <- setNames(colors, programs)
+
+theme_set(theme_bw(16) + theme(strip.background = element_blank()))
+
+shift_legend <- function(p) {
+  # check if p is a valid object
+  if (!"gtable" %in% class(p)) {
+    if ("ggplot" %in% class(p)) {
+      gp <- ggplotGrob(p) # convert to grob
+    } else {
+      message(
+        "This is neither a ggplot object nor a grob generated from ggplotGrob. Returning original plot."
+      )
+      return(p)
+    }
+  } else {
+    gp <- p
+  }
+
+  # check for unfilled facet panels
+  facet.panels <- grep("^panel", gp[["layout"]][["name"]])
+  empty.facet.panels <-
+    sapply(facet.panels, function(i)
+      "zeroGrob" %in% class(gp[["grobs"]][[i]]))
+  empty.facet.panels <- facet.panels[empty.facet.panels]
+  if (length(empty.facet.panels) == 0) {
+    message("There are no unfilled facet panels to shift legend into. Returning original plot.")
+    return(p)
+  }
+
+  # establish extent of unfilled facet panels (including any axis cells in between)
+  empty.facet.panels <- gp[["layout"]][empty.facet.panels,]
+  empty.facet.panels <-
+    list(
+      min(empty.facet.panels[["t"]]),
+      min(empty.facet.panels[["l"]]),
+      max(empty.facet.panels[["b"]]),
+      max(empty.facet.panels[["r"]])
+    )
+  names(empty.facet.panels) <- c("t", "l", "b", "r")
+  
+  # extract legend & copy over to location of unfilled facet panels
+  guide.grob <- which(gp[["layout"]][["name"]] == "guide-box")
+  if (length(guide.grob) == 0) {
+    message("There is no legend present. Returning original plot.")
+    return(p)
+  }
+  gp <- gtable_add_grob(
+    x = gp,
+    grobs = gp[["grobs"]][[guide.grob]],
+    t = empty.facet.panels[["t"]],
+    l = empty.facet.panels[["l"]],
+    b = empty.facet.panels[["b"]],
+    r = empty.facet.panels[["r"]],
+    name = "new-guide-box"
+  )
+  
+  # squash the original guide box's row / column (whichever applicable)
+  # & empty its cell
+  guide.grob <- gp[["layout"]][guide.grob,]
+  if (guide.grob[["l"]] == guide.grob[["r"]]) {
+    gp <- gtable_squash_cols(gp, cols = guide.grob[["l"]])
+  }
+  if (guide.grob[["t"]] == guide.grob[["b"]]) {
+    gp <- gtable_squash_rows(gp, rows = guide.grob[["t"]])
+  }
+  gp <- gtable_remove_grobs(gp, "guide-box")
+
+  return(gp)
+}
+```
 ## Macro benchmark
+
+### Mermory usage
+```{r macro-mem}
+df.trace = read.csv("results/trace.csv", sep = '\t')
+df.trace = df.trace %>%
+  group_by(program, size) %>% summarize(max_peak_vmem = min(peak_rss)) %>% ungroup()
+
+df.trace[df.trace$program == 'bitorch',]$program = 'torchtree/BITO'
+
+ggplot(df.trace, aes(x = size,
+                     y = max_peak_vmem,
+                     color = program)) +
+  geom_line() +
+  geom_point() +
+  xlab("Number of sequences") +
+  ylab("Peak RSS") +
+  scale_color_manual(values = progColors) +
+  theme(
+    legend.position = c(0.2, 0.7),
+    legend.title = element_blank(),
+    legend.box.background = element_rect(fill = 'transparent')
+  )
+```
+
+\newpage
 
 ### Runtime against dataset size
 ```{r include=FALSE}
 df.macro.raw = read.csv("results/macro/macro.csv", sep = ',')
+
+df.macro.raw[df.macro.raw$program == 'bitorch', ]$program = 'torchtree/BITO'
 max_iter = 5000 # number of iterations in the benchmark
 ```
 
-```{r}
+```{r macro-time}
 df.macro = df.macro.raw %>%
   filter(iters == max_iter | program == 'treeflow') %>%
   group_by(program, size) %>% summarize(time = min(time)) %>% ungroup()
@@ -84,12 +202,18 @@ ggplot(df.macro, aes(x = size,
   geom_line() +
   geom_point() +
   xlab("Number of sequences") +
-  ylab("Time in seconds")
+  ylab("Time in seconds") +
+  scale_color_manual(values = progColors) +
+  theme(
+    legend.position = c(0.8, 0.7),
+    legend.title = element_blank(),
+    legend.box.background = element_rect(fill = 'transparent')
+  )
 ```
 
 \newpage
 ### Runtime against dataset size without phylojax
-```{r}
+```{r macro-time-no-jax}
 df.macro = df.macro.raw %>%
   filter(iters == max_iter | program == 'treeflow') %>%
   filter(program != 'phylojax') %>%
@@ -101,15 +225,19 @@ ggplot(df.macro, aes(x = size,
   geom_line() +
   geom_point() +
   xlab("Number of sequences") +
-  ylab("Time in seconds")
+  ylab("Time in seconds") +
+  scale_color_manual(values = progColors) +
+  theme(
+    legend.position = c(0.2, 0.7),
+    legend.title = element_blank(),
+    legend.box.background = element_rect(fill = 'transparent')
+  )
 ```
 
-### Runtime against dataset size up to 500 sequences
+\newpage
 ```{r}
 df.macro = df.macro.raw %>%
-  filter(iters == max_iter | program == 'treeflow') %>%
-  filter(size <= 500) %>%
-  filter(program != 'phylojax') %>%
+  filter(program %in%  c('bitorch', 'torchtree/BITO', 'physher')) %>%
   group_by(program, size) %>% summarize(time = min(time)) %>% ungroup()
 
 ggplot(df.macro, aes(x = size,
@@ -118,7 +246,60 @@ ggplot(df.macro, aes(x = size,
   geom_line() +
   geom_point() +
   xlab("Number of sequences") +
-  ylab("Time in seconds")
+  ylab("Time in seconds") +
+  scale_color_manual(values = progColors) +
+  theme(
+    legend.position = c(0.2, 0.7),
+    legend.title = element_blank(),
+    legend.box.background = element_rect(fill = 'transparent')
+  )
+```
+
+\newpage
+
+### Speed relative to physher
+```{r macro-time-rel}
+df.macro.physher = df.macro.raw %>% filter(program == 'physher') %>%
+  select(!"elbo") %>% select(!"iters")
+df.macro.other = df.macro.raw %>% filter(!program %in% c('physher', 'physherpy')) %>%
+  select(!"elbo") %>% select(!"iters")
+df.relative = inner_join(df.macro.other, df.macro.physher, c("size", "rep")) %>%
+  mutate(ratio = time.x / time.y) %>% group_by(program.x, size) %>%
+  summarize(minratio = min(ratio)) %>% ungroup()
+
+ggplot(df.relative, aes(x = size,
+                        y = minratio,
+                        color = program.x)) +
+  geom_line() +
+  geom_point() +
+  geom_hline(yintercept = 1) +
+  scale_y_continuous(trans = 'log2') +
+  xlab("Number of sequences") +
+  ylab("Ratio program/physher time") +
+  scale_color_manual(values = progColors) +
+  theme(
+    legend.position = c(0.8, 0.75),
+    legend.title = element_blank(),
+    legend.box.background = element_rect(fill = 'transparent')
+  )
+```
+
+\newpage
+
+### Runtime against dataset size up fastest
+```{r}
+df.macro = df.macro.raw %>%
+  filter(iters == max_iter) %>%
+  filter(!program %in% c('phylostan', 'torchtree', 'treeflow', 'phylojax'))
+
+ggplot(df.macro, aes(x = size,
+                     y = time,
+                     color = program)) +
+  #geom_line() +
+  geom_point() +
+  xlab("Number of sequences") +
+  ylab("Time in seconds") +
+  scale_color_manual(values = progColors)
 ```
 
 
@@ -127,7 +308,7 @@ ggplot(df.macro, aes(x = size,
 df.micro = read.csv("results/micro/micro.csv", sep = ',')
 
 df.micro[df.micro$program == 'treeflow' &
-           df.micro$function. == 'constant_coalescent', ]$function. = 'coalescent'
+           df.micro$function. == 'constant_coalescent',]$function. = 'coalescent'
 
 df.micro$function.[df.micro$function. == 'treelikelihoodJC69'] = 'treelikelihood'
 
@@ -135,23 +316,23 @@ df.micro$function.[df.micro$function. == 'treelikelihoodJC69'] = 'treelikelihood
 df.micro = df.micro %>% group_by(program, size, precision, function., mode, JIT) %>%
   summarize(time = min(time)) %>% ungroup()
 
-df.micro[df.micro$precision == 32,]$program = 'torchtree32'
+df.micro[df.micro$precision == 32, ]$program = 'torchtree SP'
 
 df.micro = df.micro %>% filter(function. != 'ratio_transform_jacobian2' &
                                  function. != 'ratio_transform2')
 
+df.micro[df.micro$program == 'treeflow', ]$JIT = 'off'
+
 df.micro = df.micro %>%
-  mutate(program = ifelse(
-    function. == 'treelikelihoodAnalytic',
-    'jax-analytic',
-    program
-  ))  %>%
+  mutate(program = ifelse(function. == 'treelikelihoodAnalytic',
+                          'jax-analytic',
+                          program))  %>%
   mutate(function. = ifelse(
     function. == 'treelikelihoodAnalytic',
     'treelikelihood',
     function.
   ))
-df.micro = df.micro %>% filter(program != 'jax-analytic')
+#df.micro = df.micro %>% filter(program != 'jax-analytic')
 
 # add first and other evaluation times
 df.micro.jax = df.micro %>% filter(program == 'phylojax')
@@ -169,106 +350,199 @@ df.micro = rbind(
   df.micro.jax.all,
   df.micro.jax.1 %>% mutate(program = 'phylojax1')
 )
+
+df.micro$function.[df.micro$function. == "ratio_transform_jacobian"] = "Transform Jacobian"
+df.micro$function.[df.micro$function. == "ratio_transform"] = "Transform"
+df.micro$function.[df.micro$function. == "coalescent"] = "Coalescent"
+df.micro$function.[df.micro$function. == "treelikelihood"] = "Treelikelihood JC69"
+df.micro$function.[df.micro$function. == "treelikelihoodGTR"] = "Treelikelihood GTR"
+
+df.micro.jit = df.micro
+df.micro = df.micro %>% filter(JIT == "off")
+df.micro[df.micro$program == 'bitorch',]$program = 'torchtree/BITO'
 ```
 
 \newpage
 
 ## Micro benchmark
 ### Log likelihood evalutation
-```{r}
+```{r micro-eval}
 micro.like = df.micro %>% filter(mode == 'evaluation')
 
-ggplot(micro.like, aes(
+p <- ggplot(micro.like, aes(
   x = size,
   y = time,
-  color = program,
-  linetype = JIT
+  color = program
 )) +
   geom_line() +
   geom_point() +
-  facet_wrap( ~ function., scales = "free", nrow = 2) +
+  facet_wrap( ~ function., scales = "free", nrow = 2,strip.position = "top") +
   xlab("Number of sequences") +
-  ylab("Time in seconds")
+  ylab("Time in seconds for evaluation") +
+  scale_color_manual(values = progColors) +
+  theme(strip.background = element_blank(),
+        panel.border = element_blank(),
+        strip.placement = "outside",
+        legend.title = element_blank(),
+        axis.text = element_text(size = rel(0.5)),
+        legend.background = element_rect(fill='transparent'),
+        legend.box.background = element_rect(fill='transparent'))
+grid.draw(shift_legend(p))
 ```
 
 \newpage
 
 ### Gradient evaluation
-```{r}
+```{r micro-grad}
 micro.grad = df.micro %>% filter(mode == 'gradient')
-
 
 ggplot(micro.grad, aes(
   x = size,
   y = time,
-  color = program,
-  linetype = JIT
+  color = program
 )) +
   geom_line() +
   geom_point() +
   facet_wrap( ~ function., scales = "free", nrow = 2) +
   xlab("Number of sequences") +
-  ylab("Time in seconds")
+  ylab("Time in seconds for gradient") +
+  scale_color_manual(values = progColors) +
+  theme(strip.background = element_blank(),
+        panel.border = element_blank(),
+        strip.placement = "outside",
+        legend.title = element_blank(),
+        axis.text = element_text(size = rel(0.5)),
+        legend.background = element_rect(fill='transparent'),
+        legend.box.background = element_rect(fill='transparent'))
+grid.draw(shift_legend(p))
 ```
 
 \newpage
 
 ### Log likelihood evaluation wihtout phylojax
-```{r}
-micro.grad = df.micro %>% filter(mode == 'evaluation') %>%
-  filter(!grepl('phylojax', program))
+```{r micro-eval-no-jax}
+micro.like = df.micro %>% filter(mode == 'evaluation') %>%
+  filter(!grepl('phylojax', program) & program != 'torchtree SP')
 
-ggplot(micro.grad, aes(
+p <-ggplot(micro.like, aes(
   x = size,
   y = time,
-  color = program,
-  linetype = JIT
+  color = program#,
+  #linetype = JIT
 )) +
   geom_line() +
   geom_point() +
   facet_wrap( ~ function., scales = "free", nrow = 2) +
   xlab("Number of sequences") +
-  ylab("Time in seconds")
+  ylab("Time in seconds for evaluation") +
+  scale_color_manual(values = progColors) +
+  theme(strip.background = element_blank(),
+        panel.border = element_blank(),
+        strip.placement = "outside",
+        legend.title = element_blank(),
+        axis.text = element_text(size = rel(0.5)),
+        legend.background = element_rect(fill='transparent'),
+        legend.box.background = element_rect(fill='transparent'))
+grid.draw(shift_legend(p))
 ```
 
 \newpage
 
 ### Gradient evaluation wihtout phylojax
-```{r}
+```{r micro-grad-no-jax}
 micro.grad = df.micro %>% filter(mode == 'gradient') %>%
-  filter(!grepl('phylojax', program))
+  filter(JIT != 'on' |
+           program != 'torchtree' & program != 'torchtree SP') %>%
+  filter(!grepl('phylojax', program) & program != 'torchtree SP')
 
-ggplot(micro.grad, aes(
+p <- ggplot(micro.grad,
+            aes(x = size,
+                y = time,
+                color = program)) +
+  geom_line() +
+  geom_point() +
+  facet_wrap(~ function., scales = "free", nrow = 2) +
+  xlab("Number of sequences") +
+  ylab("Time in seconds for evaluation") +
+  scale_color_manual(values = progColors) +
+  theme(
+    strip.background = element_blank(),
+    panel.border = element_blank(),
+    strip.placement = "outside",
+    legend.title = element_blank(),
+    axis.text = element_text(size = rel(0.5)),
+    legend.background = element_rect(fill = 'transparent'),
+    legend.box.background = element_rect(fill = 'transparent')
+  )
+grid.draw(shift_legend(p))
+```
+
+\newpage
+### Gradient evaluation phylojax only
+```{r micro-grad-jax-only}
+micro.jax.grad = df.micro.jit %>% filter(mode == 'gradient') %>%
+  filter(program == 'phylojax')
+
+ggplot(micro.jax.grad, aes(
   x = size,
   y = time,
-  color = program,
+  color = JIT,
   linetype = JIT
 )) +
   geom_line() +
   geom_point() +
-  facet_wrap( ~ function., scales = "free", nrow = 2) +
+  facet_wrap(~ function., scales = "free", nrow = 2) +
   xlab("Number of sequences") +
-  ylab("Time in seconds")
+  ylab("Time in seconds for gradient") +
+  theme(
+    strip.background = element_blank(),
+    panel.border = element_blank(),
+    strip.placement = "outside",
+    axis.text = element_text(size = rel(0.5)),
+    legend.background = element_rect(fill = 'transparent'),
+    legend.box.background = element_rect(fill = 'transparent')
+  )
 ```
 
 \newpage
 
 ### Gradient evaluation log scale
-```{r}
-dd = df.micro %>% filter(mode == 'gradient') %>% filter(program != 'phylojax')
-ggplot(dd, aes(
-  x = size,
-  y = time,
-  color = program,
-  linetype = JIT
-)) +
+```{r micro-grad-log}
+dd = df.micro %>% filter(mode == 'gradient') %>% filter(program != 'phylojax1')
+p <- ggplot(dd, aes(x = size,
+                    y = time,
+                    color = program)) +
   geom_point() +
   stat_smooth(formula = y ~ x,
               method = "lm",
               se = FALSE) +
-  scale_x_continuous(trans = 'log2') +
-  scale_y_continuous(trans = 'log2') +
-  facet_wrap( ~ function., scales = "free", nrow = 2)
+  scale_x_continuous(
+    trans = log10_trans(),
+    breaks = trans_breaks("log10", function(x)
+      10 ^ x),
+    labels = trans_format("log10", math_format(10 ^ .x))
+  ) +
+  scale_y_continuous(
+    trans = log10_trans(),
+    breaks = trans_breaks("log10", function(x)
+      10 ^ x),
+    labels = trans_format("log10", math_format(10 ^ .x))
+  ) +
+  
+  xlab("Number of sequences (log scale)") +
+  ylab("Time in seconds for gradient (log scale)") +
+  facet_wrap(~ function., scales = "free", nrow = 2) +
+  scale_color_manual(values = progColors) +
+  theme(
+    strip.background = element_blank(),
+    panel.border = element_blank(),
+    strip.placement = "outside",
+    legend.title = element_blank(),
+    axis.text = element_text(size = rel(0.5)),
+    legend.background = element_rect(fill = 'transparent'),
+    legend.box.background = element_rect(fill = 'transparent')
+  )
+grid.draw(shift_legend(p))
 ```
 
 \newpage
@@ -284,6 +558,10 @@ fit_log_log <- function(df, m) {
     x$coefficients[[1]])
   fits$slope = sapply(fits$model, function(x)
     x$coefficients[[2]])
+  fits$r_squared = sapply(fits$model, function(x)
+    summary(x)$r.squared)
+  fits$cook = lapply(fits$model, function(x)
+    cooks.distance(x))
   fits = fits %>% select(!model)
   fits
 }
@@ -295,7 +573,9 @@ fit_log_log <- function(df, m) {
 ```{r}
 dd.log = fit_log_log(df.micro, 'evaluation')
 
-kable(dd.log %>% arrange(function., slope))
+kable(dd.log %>% select(-cook) %>% arrange(function., slope, r_squared))
+# cook=dd.log%>%filter(program =='treeflow') %>%  filter(mode=='evaluation') %>% filter(function.=='treelikelihood')
+# plot(cook$cook[[1]])
 ```
 
 \newpage
@@ -304,14 +584,14 @@ kable(dd.log %>% arrange(function., slope))
 ```{r}
 dd.log.grad = fit_log_log(df.micro, 'gradient')
 
-kable(dd.log.grad %>% arrange(function., slope))
+kable(dd.log.grad%>% select(-cook) %>% select(-mode)%>% select(-JIT) %>% arrange(function., slope))
 ```
 
 \newpage
 
 ### Only bitorch and physher
 ```{r}
-dd = df.micro %>%  filter(program %in% c('physher', 'bitorch')) %>%
+dd = df.micro %>%  filter(program %in% c('physher', 'bitorch', 'torchtree/BITO')) %>%
   filter(function. != 'coalescent')
 
 ggplot(dd, aes(
@@ -324,27 +604,60 @@ ggplot(dd, aes(
   geom_point() +
   facet_wrap( ~ function., scales = "free") +
   xlab("Number of sequences") +
-  ylab("Time in seconds")
+  ylab("Time in seconds") +
+  scale_color_manual(values = progColors)
+```
+
+```{r}
+dd = df.micro %>%  filter(program %in% c('physher', 'torchtree', 'jax-analytic'))#%>% filter(function. == 'treelikelihood')%>% filter(mode != 'gradient1')%>% filter(mode != 'evaluation1')
+
+ggplot(dd, aes(
+  x = size,
+  y = time,
+  color = program,
+  linetype = mode
+)) +
+  geom_line() +
+  geom_point() +
+  facet_wrap( ~ function., scales = "free") +
+  xlab("Number of sequences") +
+  ylab("Time in seconds") +
+  scale_color_manual(values = progColors)
 ```
 
 \newpage
 
 ### Ratio of gradient and likelihood execution time
 ```{r}
-micro.join = micro.like %>%
-  full_join(micro.grad,
+micro.join = df.micro  %>% filter(mode == 'evaluation') %>%
+  full_join(df.micro  %>% filter(mode == 'gradient'),
             by = c("program", "size", "precision", "function.", "JIT")) %>%
   mutate(ratio = time.y / time.x) %>% filter(!grepl('phylojax', program))
 
 ggplot(micro.join, aes(
   x = size,
   y = ratio,
-  color = program,
-  linetype = JIT
+  color = program
 )) +
   geom_line() +
   geom_point() +
   facet_wrap( ~ function., scales = "free") +
   xlab("Number of sequences") +
-  ylab("Ratio gradient/evaluation execution times")
+  ylab("Ratio gradient/evaluation execution times") +
+  scale_color_manual(values = progColors)
 ```
+### ELBO convergence
+```{r}
+df.elbos = read.csv("results/elbos.csv")
+df.elbos = df.elbos %>% filter(iteration <= 25000)
+ggplot(df.elbos, aes(
+  x = iteration,
+  y = elbo,
+  color = program
+)) +
+  geom_line() +
+  facet_wrap( ~ model) +
+  xlab("Number of iterations") +
+  ylab("ELBO")
+```
+
