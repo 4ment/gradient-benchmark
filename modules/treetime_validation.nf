@@ -2,8 +2,10 @@
 
 nextflow.enable.dsl = 2
 
-params.subtrees = Channel.of(20, 50, 100, 200, 500, 750, 1000)//, 1250, 1500, 2000)
+params.subtrees = Channel.of(20, 50, 100, 200, 500, 750, 1000, 1250, 1500, 2000)
 params.subtrees_replicates = Channel.of(0..9)
+//params.subtrees = Channel.of(20, 50)//, 100, 200, 500, 750, 1000, 1250, 1500, 2000)
+//params.subtrees_replicates = Channel.of(0..1)
 params.base = "$baseDir"
 
 alignment_file = "$params.base/resources/flu_H3N2/H3N2_HA_2011_2013.fasta"
