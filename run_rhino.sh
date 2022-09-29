@@ -10,9 +10,9 @@ export PATH=$SINGULARITYROOT/bin/:$PATH
 /usr/bin/time nextflow  \
     -C ./configs/rhino.config \
     run main.nf \
-    --results "batch-results" \
+    --results "batch-results-$(date -I)" \
     -profile rhino \
-    -with-report "batch-results"/nextflow_report.html \
-    -with-trace  "batch-results"/trace.txt \
+    -with-report "batch-results-$(date -I)"/nextflow_report.html \
+    -with-trace  "batch-results-$(date -I)"/trace.txt \
     -work-dir "batch-results/work/" \
     -resume

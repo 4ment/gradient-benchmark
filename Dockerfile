@@ -1,6 +1,7 @@
 FROM continuumio/anaconda3
 LABEL "author"="Mathieu Fourment"
 LABEL "company"="University of Technology Sydney"
+CACHE OFF
 
 RUN apt-get update && \
 	apt-get install -y --no-install-recommends \
@@ -68,6 +69,7 @@ RUN ln -s /phylojax/benchmarks/benchmark.py /usr/local/bin/phylojax-benchmark \
 
 RUN pip install phylostan==1.0.5 && phylostan --help
 
+ADD https://api.github.com/repos/christiaanjs/treeflow/git/refs/heads/master version.json
 RUN git clone --depth 1 https://github.com/christiaanjs/treeflow.git /treeflow
 RUN cd /treeflow && /opt/conda/envs/bito/bin/pip install . 
 RUN . /opt/conda/etc/profile.d/conda.sh && conda activate bito && treeflow_benchmark --help
