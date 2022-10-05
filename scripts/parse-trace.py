@@ -13,6 +13,8 @@ for (dirpath, dirnames, filenames) in walk(sys.argv[1]):
 with open(sys.argv[2], "r") as fp:
     for line in fp:
         a = line.split("\t")
+        if 'FAILED' in a or 'ABORTED' in a:
+            continue
         if "task_id" == a[0]:
             print("program\tsize\treplicate\t" + line, end="")
         elif "macro_flu:RUN_" in a[3]:

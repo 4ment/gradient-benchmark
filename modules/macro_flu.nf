@@ -184,6 +184,8 @@ process RUN_TREEFLOW {
   label 'fast'
   label 'bito'
 
+  errorStrategy 'ignore'
+
   publishDir "$params.results/macro/treeflow", mode: 'copy'
 
   input:
