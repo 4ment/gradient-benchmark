@@ -3,7 +3,7 @@ LABEL "author"="Mathieu Fourment"
 LABEL "company"="University of Technology Sydney"
 
 # bust cache and re-run all
-ADD http://date.jsontest.com /etc/builddate
+# ADD http://date.jsontest.com /etc/builddate
 
 RUN apt-get update && \
 	apt-get install -y --no-install-recommends \

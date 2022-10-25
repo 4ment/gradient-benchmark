@@ -14,5 +14,5 @@ export PATH=$SINGULARITYROOT/bin/:$PATH
     -profile rhino \
     -with-report "batch-results-$(date -I)"/nextflow_report.html \
     -with-trace  "batch-results-$(date -I)"/trace.txt \
-    -work-dir "batch-results-$(date -I)/work/" \
-    -resume
+    -work-dir "batch-results-$(date -I)/work/" #\
+    #-resume
