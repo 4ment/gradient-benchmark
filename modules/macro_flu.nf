@@ -189,13 +189,14 @@ process RUN_TREEFLOW {
   publishDir "$params.results/macro/treeflow", mode: 'copy'
 
   input:
-    tuple val(size), val(rep), path(tree_file), path(seq_file)
+    tuple val(size), val(rep), path(tree_file), val(rate), path(seq_file)
   output:
     tuple path("treeflow.${size}.${rep}.txt"), path("treeflow.${size}.${rep}.log")
   """
   { time \
   treeflow_vi -i ${seq_file} \
               -t ${tree_file} \
+              --init-values clock_rate=${rate} \
               -n ${params.iterations} > treeflow.${size}.${rep}.txt ; } 2> treeflow.${size}.${rep}.log
   """
 }
@@ -224,7 +225,7 @@ workflow macro_flu {
 
   RUN_TORCHTREE(data_run.join(PREPARE_TORCHTREE.out, by: [0, 1]))
 
-  RUN_TREEFLOW(data_run)
+  RUN_TREEFLOW(data.map {it.take(5)} )
 
   ch_files = Channel.empty()
   ch_files = ch_files.mix(
