@@ -139,7 +139,7 @@ process PREPARE_TORCHTREE {
 }
 
 process RUN_TORCHTREE {
-  label 'fast'
+  label 'normal'
   label 'bito'
 
   errorStrategy 'ignore'
@@ -158,15 +158,16 @@ process RUN_TORCHTREE {
 
 process RUN_PHYLOJAX {
   label 'bito'
-
   errorStrategy 'ignore'
-
   publishDir "$params.results/macro/phylojax", mode: 'copy'
 
   input:
     tuple val(size), val(rep), path(tree_file), val(rate), path(seq_file)
   output:
     tuple path("phylojax.${size}.${rep}.txt"), path("phylojax.${size}.${rep}.log")
+
+  when:
+    size <= 750
   """
   { time \
   phylojax -i ${seq_file} \
@@ -181,7 +182,6 @@ process RUN_PHYLOJAX {
 }
 
 process RUN_TREEFLOW {
-  label 'fast'
   label 'bito'
 
   errorStrategy 'ignore'

@@ -29,7 +29,7 @@ process RUN_PHYSHER_BENCHMARK {
 }
 
 process RUN_TORCHTREE_BENCHMARK {
-  label 'normal'
+  //label 'normal'
   label 'bito'
 
   publishDir "$params.results/micro/${phylox}", mode: 'copy'
@@ -67,6 +67,7 @@ process RUN_PHYLOJAX_BENCHMARK {
   tuple val(size), val(rep), path(lsd_newick), path(seq_file)
   output:
   path("phylojax.${size}.${rep}.csv")
+
   """
   phylojax-benchmark -i $seq_file \
                      -t $lsd_newick \
@@ -119,6 +120,9 @@ process COMBIME_CSV {
   tail -q -n+2 *[0-9].csv >> micro.csv
   """
 }
+//head -n1 ${files[0]} > micro
+//tail -q -n+2 *.csv >> micro
+//mv micro micro.csv
 
 workflow micro {
   take:

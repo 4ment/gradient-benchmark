@@ -17,6 +17,8 @@ with open(sys.argv[2], "r") as fp:
             continue
         if "task_id" == a[0]:
             print("program\tsize\treplicate\t" + line, end="")
+        if a[1] not in dic:
+            continue
         elif "macro_flu:RUN_" in a[3]:
             for f in dic[a[1]]:
                 if ".txt" in f:
