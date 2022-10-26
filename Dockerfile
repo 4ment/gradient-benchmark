@@ -3,7 +3,7 @@ LABEL "author"="Mathieu Fourment"
 LABEL "company"="University of Technology Sydney"
 
 # bust cache and re-run all
-# ADD http://date.jsontest.com /etc/builddate
+ADD http://date.jsontest.com /etc/builddate
 
 RUN apt-get update && \
 	apt-get install -y --no-install-recommends \
@@ -73,7 +73,7 @@ RUN pip install phylostan==1.0.5 && phylostan --help
 RUN pip install tqdm
 
 # workaround to bust cache if the master branch has been updated ... 
-ADD https://api.github.com/repos/christiaanjs/treeflow/git/refs/heads/master /.git-hashref
+# ADD https://api.github.com/repos/christiaanjs/treeflow/git/refs/heads/master /.git-hashref
 RUN git clone --depth 1 https://github.com/christiaanjs/treeflow.git /treeflow
 RUN cd /treeflow && git checkout e3414dcc9e764d06abc3e19c1d0f55110499e2ea && /opt/conda/envs/bito/bin/pip install . 
 RUN . /opt/conda/etc/profile.d/conda.sh && conda activate bito && treeflow_benchmark --help
