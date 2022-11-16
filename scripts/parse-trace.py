@@ -8,7 +8,7 @@ if len(sys.argv) == 1:
 dic = {}
 for (dirpath, dirnames, filenames) in walk(sys.argv[1]):
     if len(filenames) > 0:
-        dic[dirpath.lstrip("work/")[:9]] = filenames
+        dic[dirpath.split('/', maxsplit=2)[-1][:9]] = filenames
 
 with open(sys.argv[2], "r") as fp:
     for line in fp:
@@ -17,6 +17,8 @@ with open(sys.argv[2], "r") as fp:
             continue
         if "task_id" == a[0]:
             print("program\tsize\treplicate\t" + line, end="")
+        if a[1] not in dic:
+            continue
         elif "macro_flu:RUN_" in a[3]:
             for f in dic[a[1]]:
                 if ".txt" in f:
