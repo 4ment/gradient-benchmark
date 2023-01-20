@@ -314,7 +314,7 @@ df.micro[df.micro$program == 'bitorch',]$program = 'torchtree/bito/\nBEAGLE'
 ## Micro benchmark
 ```{r}
 plot.micro <- function(d, ylabel) {
-  p <- ggplot(micro.like,
+  p <- ggplot(d,
               aes(
                 x = size,
                 y = time,
