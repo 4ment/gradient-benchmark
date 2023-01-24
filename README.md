@@ -36,7 +36,7 @@ Docker is not required but it is highly recommended to use it due to the numerou
 
     nextflow run 4ment/autodiff-experiments -profile docker -with-trace
 
-Since the pipeline will take weeks to run to completion one should use a high performance computer. Examples of configuration files for pbspro and slurm can be found in the [configs](config/) folder.
+Since the pipeline will take weeks to run to completion one should use a high performance computer. Examples of configuration files for pbspro and slurm can be found in the [configs](configs/) folder.
 
 ## Summarizing results
 
@@ -47,6 +47,32 @@ Before generating the figures, we need to extract memory usage information from 
 Generate figures in a single pdf:
 
     Rscript -e 'rmarkdown::render("plot.Rmd")'
+
+## Library versions
+
+For reproducbility, we provide below the version or commit hash of each library/program used in the benchmark.
+
+| Library      | Version  |
+| ------------ | -------- |
+| [jax]                  | 0.2.24   |
+| jaxlib                 | 0.3.7    |
+| numpy                  | 1.22     |
+| [pystan]               | 2.19.1.1 |
+| [tensorflow]           | 2.10.0   |
+| tensorflow-probability | 0.18.0   |
+| [pytorch]              | 1.12.1   |
+
+ | Program | Version/hash |
+ | ------------ | -------- |
+ | [bito] |         cc0806abcd0b9f2fab604e800c674c9a5c5afebe |
+ | [phylojax]       | a1612cae36292af76e8d24cc40d6544162c987aa |
+ | [phylostan]      | 1.0.5 |
+ | [physher]        | b19ff2f9422f29ba1ab31306a3fe29ab6a6f607b |
+ | [torchtree]      | f3831650a807e74cc2e9478009e57a41f47bed8d |
+ | [torchtree-bito] | e2a95cefb13968f95f6e5520bd0a52d726ee7fc9 |
+ | [treeflow]       | e3414dcc9e764d06abc3e19c1d0f55110499e2ea |
+ 
+
 
 [physher]: https://github.com/4ment/physher
 [phylostan]: https://github.com/4ment/phylostan
@@ -62,3 +88,4 @@ Generate figures in a single pdf:
 [JAX]: https://github.com/google/jax
 [PyTorch]: https://pytorch.org
 [TensorFlow]: https://www.tensorflow.org
+[pystan]: https://github.com/stan-dev/pystan2
